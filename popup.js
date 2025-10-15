@@ -27,7 +27,6 @@ class WeatherExtension {
       this.currentCity = e.target.value;
       chrome.storage.local.set({ selectedCity: this.currentCity });
       this.fetchWeatherData();
-
     });
   }
 
@@ -48,12 +47,9 @@ class WeatherExtension {
       const data = await response.json();
       this.displayWeatherData(data);
       this.updateBackground(data.location.localtime);
-    }
-    
-    catch (error) {
+    } catch (error) {
       this.showError(`Failed to fetch weather data: ${error.message}`);
     }
-
   }
 
   displayWeatherData(data) {
@@ -131,21 +127,14 @@ class WeatherExtension {
     
  
     body.classList.remove('background-morning', 'background-day', 'background-evening', 'background-night');
-
     //changesbackground based on time of day
     if (hour >= 6 && hour < 12) {
       body.classList.add('background-morning');
-    } 
-    
-    else if (hour >= 12 && hour < 17) {
+    } else if (hour >= 12 && hour < 17) {
       body.classList.add('background-day');
-    } 
-    
-    else if (hour >= 17 && hour < 20) {
+    } else if (hour >= 17 && hour < 20) {
       body.classList.add('background-evening');
-    } 
-    
-    else {
+    } else {
       body.classList.add('background-night');
     }
   }
@@ -178,6 +167,7 @@ class WeatherExtension {
   }
 }
 
+// Initialize the extension when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   new WeatherExtension();
 });
