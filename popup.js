@@ -77,8 +77,6 @@ class WeatherExtension {
     document.getElementById('weatherIcon').src = 
       `https:${data.current.condition.icon}`;
 
-
-    // Weather details
     document.getElementById('feelsLike').textContent = 
       `${Math.round(data.current.feelslike_c)}°C`;
 
@@ -167,7 +165,6 @@ class WeatherExtension {
   }
 }
 
-// Initialize the extension when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   new WeatherExtension();
 });
