@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Weather Forecast</h1>
+      <div class="city-selector">
+        <select id="citySelect">
+          <option value="London">London</option>
+          <option value="New York">New York</option>
+          <option value="Tokyo">Tokyo</option>
+          <option value="Paris">Paris</option>
+          <option value="Sydney">Sydney</option>
+          <option value="Dubai">Dubai</option>
+          <option value="Mumbai">Mumbai</option>
+          <option value="Singapore">Singapore</option>
+        </select>
+      </div>
+    </div>
+    
+    <div id="loading" class="loading">Loading weather data...</div>
+    
+    <div id="weatherData" class="weather-data hidden">
+      <div class="current-weather">
+        <div class="location">
+          <h2 id="locationName"></h2>
+          <p id="currentDate"></p>
+        </div>
+        <div class="temperature-section">
+          <span id="currentTemp" class="temp-main"></span>
+          <div class="weather-icon">
+            <img id="weatherIcon" src="" alt="Weather Icon">
+          </div>
+        </div>
+      </div>
+      
+      <div class="condition-text" id="conditionText"></div>
+      
+      <div class="weather-details">
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="label">Feels Like</span>
+            <span id="feelsLike" class="value"></span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Humidity</span>
+            <span id="humidity" class="value"></span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="label">Wind</span>
+            <span id="wind" class="value"></span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Pressure</span>
+            <span id="pressure" class="value"></span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="label">Visibility</span>
+            <span id="visibility" class="value"></span>
+          </div>
+          <div class="detail-item">
+            <span class="label">UV Index</span>
+            <span id="uv" class="value"></span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="forecast">
+        <h3>3-Day Forecast</h3>
+        <div id="forecastDays" class="forecast-days"></div>
+      </div>
+    </div>
+    
+    <div id="error" class="error hidden"></div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

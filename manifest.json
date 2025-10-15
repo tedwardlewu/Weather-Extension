@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Weather Forecast",
+  "version": "1.0",
+  "description": "Get weather information for major cities",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Weather Forecast",
+    "default_icon": {
+      "16": "Tunary.png",
+      "32": "Tunary.png",
+      "48": "Tunary.png",
+      "128": "Tunary.png"
+    }
+  },
+  "icons": {
+    "16": "Tunary.png",
+    "32": "Tunary.png",
+    "48": "Tunary.png",
+    "128": "Tunary.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.weatherapi.com/*"
+  ]
+}
