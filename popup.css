@@ -14,13 +14,11 @@ body {
   transition: background 0.8s ease, color 0.4s ease;
 }
 
-/* Container */
 .container {
   padding: 20px;
   min-height: 400px;
 }
 
-/* Header */
 .header {
   margin-bottom: 20px;
 }
@@ -34,7 +32,6 @@ body {
   text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* City Selector */
 .city-selector {
   position: relative;
 }
@@ -66,7 +63,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* Theme-based dropdown background updates dynamically */
 body.background-morning .city-selector select {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(255,255,255,0.6);
@@ -95,7 +91,6 @@ body.background-night .city-selector select {
   color: #102a60;
 }
 
-/* Loading */
 .loading {
   text-align: center;
   padding: 40px;
@@ -108,7 +103,6 @@ body.background-night .city-selector select {
   display: none !important;
 }
 
-/* Weather Data */
 .weather-data {
   animation: fadeIn 0.5s ease-in;
 }
@@ -118,7 +112,6 @@ body.background-night .city-selector select {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Current Weather Card */
 .current-weather {
   display: flex;
   justify-content: space-between;
@@ -163,7 +156,6 @@ body.background-night .city-selector select {
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
-/* Condition Text */
 .condition-text {
   text-align: center;
   padding: 10px 16px;
@@ -177,7 +169,6 @@ body.background-night .city-selector select {
   font-weight: 500;
 }
 
-/* Weather Details */
 .weather-details {
   margin-bottom: 20px;
 }
@@ -213,7 +204,6 @@ body.background-night .city-selector select {
   font-size: 15px;
 }
 
-/* Forecast */
 .forecast {
   margin-bottom: 10px;
 }
@@ -296,7 +286,6 @@ body.background-night .city-selector select {
   border: 1px solid rgba(255,255,255,0.1);
 }
 
-/* ===== Time-based Backgrounds ===== */
 .background-morning {
   background: linear-gradient(135deg, #6dd5ed 0%, #2193b0 100%);
 }

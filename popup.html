@@ -6,34 +6,26 @@
 </head>
 <body>
   <div class="container">
-
     <div class="header">
-
       <h1>Weather Forecast</h1>
       <div class="city-selector">
-        <select id="citySelect">
-          <option value="London">London</option>
-          <option value="New York">New York</option>
-          <option value="Tokyo">Tokyo</option>
-          <option value="Paris">Paris</option>
-          <option value="Sydney">Sydney</option>
-          <option value="Dubai">Dubai</option>
-          <option value="Mumbai">Mumbai</option>
-          <option value="Singapore">Singapore</option>
-        </select>
+        <input type="text" id="citySearch" placeholder="Search for a city..." autocomplete="off">
+        <div id="searchResults" class="search-results hidden"></div>
+      </div>
+      <div id="recentSearches" class="recent-searches hidden">
+        <div class="recent-title">Recent Searches</div>
+        <div class="recent-list" id="recentList"></div>
       </div>
     </div>
     
     <div id="loading" class="loading">Loading weather data...</div>
     
     <div id="weatherData" class="weather-data hidden">
-
       <div class="current-weather">
         <div class="location">
           <h2 id="locationName"></h2>
           <p id="currentDate"></p>
         </div>
-
         <div class="temperature-section">
           <span id="currentTemp" class="temp-main"></span>
           <div class="weather-icon">
@@ -49,13 +41,10 @@
           <div class="detail-item">
             <span class="label">Feels Like</span>
             <span id="feelsLike" class="value"></span>
-
           </div>
-
           <div class="detail-item">
             <span class="label">Humidity</span>
             <span id="humidity" class="value"></span>
-            
           </div>
         </div>
         <div class="detail-row">
