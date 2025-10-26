@@ -43,10 +43,8 @@ class WeatherExtension {
   }
 
   addToRecentSearches(city) {
-
     this.recentSearches = this.recentSearches.filter(item => item !== city);
     
-
     this.recentSearches.unshift(city);
     
     if (this.recentSearches.length > 5) {
@@ -73,6 +71,8 @@ class WeatherExtension {
           this.currentCity = city;
           document.getElementById('citySearch').value = city;
           this.fetchWeatherData();
+          this.hideSearchResults();
+          document.getElementById('recentSearches').classList.add('hidden');
         });
         recentList.appendChild(item);
       });
@@ -83,6 +83,7 @@ class WeatherExtension {
 
   bindEvents() {
     const citySearch = document.getElementById('citySearch');
+    const searchLoading = document.querySelector('.search-loading');
     
     citySearch.addEventListener('input', (e) => {
       const query = e.target.value.trim();
@@ -92,11 +93,21 @@ class WeatherExtension {
       }
       
       if (query.length > 2) {
+        searchLoading.classList.remove('hidden');
         this.searchTimeout = setTimeout(() => {
-          this.searchCities(query);
+          this.searchCities(query).finally(() => {
+            searchLoading.classList.add('hidden');
+          });
         }, 300);
       } else {
         this.hideSearchResults();
+        searchLoading.classList.add('hidden');
+      }
+    });
+    
+    citySearch.addEventListener('focus', () => {
+      if (this.recentSearches.length > 0) {
+        document.getElementById('recentSearches').classList.remove('hidden');
       }
     });
     
@@ -107,6 +118,7 @@ class WeatherExtension {
           this.currentCity = query;
           this.hideSearchResults();
           this.fetchWeatherData();
+          citySearch.blur();
         }
       }
     });
@@ -114,6 +126,7 @@ class WeatherExtension {
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.city-selector')) {
         this.hideSearchResults();
+        document.getElementById('recentSearches').classList.add('hidden');
       }
     });
   }
@@ -121,7 +134,7 @@ class WeatherExtension {
   async searchCities(query) {
     try {
       const response = await fetch(
-        `${BASE_URL}/search.json?key=${API_KEY}&q=${query}`
+        `${BASE_URL}/search.json?key=${API_KEY}&q=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
@@ -144,6 +157,8 @@ class WeatherExtension {
       const noResult = document.createElement('div');
       noResult.className = 'search-result-item';
       noResult.textContent = 'No cities found';
+      noResult.style.color = '#64748b';
+      noResult.style.cursor = 'default';
       resultsContainer.appendChild(noResult);
     } else {
       cities.forEach(city => {
@@ -155,6 +170,7 @@ class WeatherExtension {
           document.getElementById('citySearch').value = this.currentCity;
           this.hideSearchResults();
           this.fetchWeatherData();
+          document.getElementById('recentSearches').classList.add('hidden');
         });
         resultsContainer.appendChild(resultItem);
       });
@@ -174,11 +190,12 @@ class WeatherExtension {
 
     try {
       const response = await fetch(
-        `${BASE_URL}/forecast.json?key=${API_KEY}&q=${this.currentCity}&days=3&aqi=no&alerts=no`
+        `${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(this.currentCity)}&days=3&aqi=no&alerts=no`
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
@@ -189,6 +206,7 @@ class WeatherExtension {
       
       chrome.storage.local.set({ selectedCity: this.currentCity });
     } catch (error) {
+      console.error('Weather fetch error:', error);
       this.showError(`Failed to fetch weather data: ${error.message}`);
     }
   }
@@ -214,8 +232,9 @@ class WeatherExtension {
     document.getElementById('conditionText').textContent = 
       data.current.condition.text;
 
-    document.getElementById('weatherIcon').src = 
-      `https:${data.current.condition.icon}`;
+    const weatherIcon = document.getElementById('weatherIcon');
+    weatherIcon.src = `https:${data.current.condition.icon}`;
+    weatherIcon.alt = data.current.condition.text;
 
     document.getElementById('feelsLike').textContent = 
       `${Math.round(data.current.feelslike_c)}°C`;
@@ -264,7 +283,6 @@ class WeatherExtension {
     
     body.classList.remove('background-morning', 'background-day', 'background-afternoon', 'background-evening', 'background-night');
     
-
     if (hour >= 6 && hour < 12) {
       body.classList.add('background-morning');
     } else if (hour >= 12 && hour < 15) {
@@ -306,6 +324,12 @@ class WeatherExtension {
   }
 }
 
+// Initialize the extension when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   new WeatherExtension();
+});
+
+// Handle potential errors during initialization
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error);
 });
