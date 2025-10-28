@@ -5,6 +5,7 @@ class WeatherExtension {
   constructor() {
     this.currentCity = 'London';
     this.recentSearches = [];
+    this.pinnedCities = [];
     this.searchTimeout = null;
     this.init();
   }
@@ -12,12 +13,13 @@ class WeatherExtension {
   init() {
     this.loadSavedCity();
     this.loadRecentSearches();
+    this.loadPinnedCities();
     this.bindEvents();
     this.fetchWeatherData();
   }
 
   loadSavedCity() {
-    chrome.storage.local.get(['selectedCity', 'recentSearches'], (result) => {
+    chrome.storage.local.get(['selectedCity', 'recentSearches', 'pinnedCities'], (result) => {
       if (result.selectedCity) {
         this.currentCity = result.selectedCity;
         document.getElementById('citySearch').value = this.currentCity;
@@ -25,6 +27,10 @@ class WeatherExtension {
       if (result.recentSearches) {
         this.recentSearches = result.recentSearches;
         this.updateRecentSearches();
+      }
+      if (result.pinnedCities) {
+        this.pinnedCities = result.pinnedCities;
+        this.updatePinnedCities();
       }
     });
   }
@@ -38,8 +44,21 @@ class WeatherExtension {
     });
   }
 
+  loadPinnedCities() {
+    chrome.storage.local.get(['pinnedCities'], (result) => {
+      if (result.pinnedCities) {
+        this.pinnedCities = result.pinnedCities;
+        this.updatePinnedCities();
+      }
+    });
+  }
+
   saveRecentSearches() {
     chrome.storage.local.set({ recentSearches: this.recentSearches });
+  }
+
+  savePinnedCities() {
+    chrome.storage.local.set({ pinnedCities: this.pinnedCities });
   }
 
   addToRecentSearches(city) {
@@ -53,6 +72,27 @@ class WeatherExtension {
     
     this.saveRecentSearches();
     this.updateRecentSearches();
+  }
+
+  togglePinCity(city) {
+    const index = this.pinnedCities.indexOf(city);
+    if (index > -1) {
+      this.pinnedCities.splice(index, 1);
+    } else {
+      this.pinnedCities.push(city);
+    }
+    this.savePinnedCities();
+    this.updatePinnedCities();
+    this.updatePinButton();
+  }
+
+  updatePinButton() {
+    const pinButton = document.getElementById('pinButton');
+    if (pinButton) {
+      const isPinned = this.pinnedCities.includes(this.currentCity);
+      pinButton.textContent = isPinned ? '📍' : '📌';
+      pinButton.classList.toggle('pinned', isPinned);
+    }
   }
 
   updateRecentSearches() {
@@ -78,6 +118,45 @@ class WeatherExtension {
       });
     } else {
       recentContainer.classList.add('hidden');
+    }
+  }
+
+  updatePinnedCities() {
+    const pinnedList = document.getElementById('pinnedList');
+    const pinnedContainer = document.getElementById('pinnedCities');
+    
+    if (this.pinnedCities.length > 0) {
+      pinnedContainer.classList.remove('hidden');
+      pinnedList.innerHTML = '';
+      
+      this.pinnedCities.forEach(city => {
+        const item = document.createElement('div');
+        item.className = 'pinned-item';
+        
+        const cityName = document.createElement('span');
+        cityName.textContent = city;
+        cityName.addEventListener('click', () => {
+          this.currentCity = city;
+          document.getElementById('citySearch').value = city;
+          this.fetchWeatherData();
+          this.hideSearchResults();
+          document.getElementById('recentSearches').classList.add('hidden');
+        });
+        
+        const unpinButton = document.createElement('button');
+        unpinButton.className = 'unpin-button';
+        unpinButton.textContent = '✕';
+        unpinButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.togglePinCity(city);
+        });
+        
+        item.appendChild(cityName);
+        item.appendChild(unpinButton);
+        pinnedList.appendChild(item);
+      });
+    } else {
+      pinnedContainer.classList.add('hidden');
     }
   }
 
@@ -109,6 +188,9 @@ class WeatherExtension {
       if (this.recentSearches.length > 0) {
         document.getElementById('recentSearches').classList.remove('hidden');
       }
+      if (this.pinnedCities.length > 0) {
+        document.getElementById('pinnedCities').classList.remove('hidden');
+      }
     });
     
     citySearch.addEventListener('keydown', (e) => {
@@ -123,10 +205,18 @@ class WeatherExtension {
       }
     });
     
+    const pinButton = document.getElementById('pinButton');
+    if (pinButton) {
+      pinButton.addEventListener('click', () => {
+        this.togglePinCity(this.currentCity);
+      });
+    }
+    
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.city-selector')) {
         this.hideSearchResults();
         document.getElementById('recentSearches').classList.add('hidden');
+        document.getElementById('pinnedCities').classList.add('hidden');
       }
     });
   }
@@ -171,6 +261,7 @@ class WeatherExtension {
           this.hideSearchResults();
           this.fetchWeatherData();
           document.getElementById('recentSearches').classList.add('hidden');
+          document.getElementById('pinnedCities').classList.add('hidden');
         });
         resultsContainer.appendChild(resultItem);
       });
@@ -203,8 +294,9 @@ class WeatherExtension {
       this.updateBackground(data.location.localtime);
       
       this.addToRecentSearches(this.currentCity);
-      
       chrome.storage.local.set({ selectedCity: this.currentCity });
+      
+      this.updatePinButton();
     } catch (error) {
       console.error('Weather fetch error:', error);
       this.showError(`Failed to fetch weather data: ${error.message}`);
