@@ -25,7 +25,7 @@ body {
 
 .header h1 {
   margin: 0 0 12px 0;
-  font-size: 22px;
+  font-size: 25px;
   font-weight: 700;
   color: white;
   text-align: center;
@@ -46,7 +46,7 @@ body {
   padding: 12px 40px 12px 14px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 18px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   transition: all 0.3s ease;
@@ -114,7 +114,7 @@ body {
   font-weight: 500;
   transition: all 0.2s ease;
   margin-bottom: 3px;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .search-result-item:hover {
@@ -155,8 +155,9 @@ body {
 
 .pinned-list {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 6px;
+  justify-content: center;
 }
 
 .recent-item {
@@ -173,19 +174,20 @@ body {
 }
 
 .pinned-item {
-  padding: 8px 12px;
+  padding: 6px 12px;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
+  border-radius: 16px;
   color: white;
-  font-size: 13px;
+  font-size: 19px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 6px;
+  max-width: 120px;
 }
 
 .recent-item:hover {
@@ -205,14 +207,20 @@ body {
   border: none;
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 50%;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .unpin-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.3);
   color: white;
 }
 
@@ -225,6 +233,85 @@ body {
 
 .location-header h2 {
   margin: 0;
+  flex: 1;
+}
+
+.pinned-morning {
+  background: linear-gradient(135deg, rgba(109, 213, 237, 0.4) 0%, rgba(33, 147, 176, 0.4) 100%) !important;
+  border: 1px solid rgba(109, 213, 237, 0.6) !important;
+  color: white !important;
+}
+
+.pinned-day {
+  background: linear-gradient(135deg, rgba(79, 172, 254, 0.4) 0%, rgba(0, 242, 254, 0.4) 100%) !important;
+  border: 1px solid rgba(79, 172, 254, 0.6) !important;
+  color: white !important;
+}
+
+.pinned-afternoon {
+  background: linear-gradient(135deg, rgba(255, 153, 102, 0.4) 0%, rgba(255, 94, 98, 0.4) 100%) !important;
+  border: 1px solid rgba(255, 153, 102, 0.6) !important;
+  color: white !important;
+}
+
+.pinned-evening {
+  background: linear-gradient(135deg, rgba(250, 112, 154, 0.4) 0%, rgba(254, 225, 64, 0.4) 100%) !important;
+  border: 1px solid rgba(250, 112, 154, 0.6) !important;
+  color: white !important;
+}
+
+.pinned-night {
+  background: linear-gradient(135deg, rgba(44, 62, 80, 0.5) 0%, rgba(52, 152, 219, 0.5) 100%) !important;
+  border: 1px solid rgba(52, 152, 219, 0.6) !important;
+  color: white !important;
+}
+
+.pinned-item {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 120px;
+}
+
+.pinned-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.1);
+}
+
+.unpin-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unpin-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.pinned-city-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   flex: 1;
 }
 
@@ -368,7 +455,7 @@ body {
   background: rgba(255,255,255,0.15);
   border-radius: 12px;
   color: white;
-  font-size: 16px;
+  font-size: 20px;
   margin-bottom: 15px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,0.1);
@@ -400,14 +487,14 @@ body {
 
 .detail-item .label {
   color: rgba(255,255,255,0.9);
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 500;
 }
 
 .detail-item .value {
   color: white;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .forecast {
@@ -417,7 +504,7 @@ body {
 .forecast h3 {
   margin: 0 0 10px 0;
   color: white;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 600;
   text-align: center;
 }
@@ -451,7 +538,7 @@ body {
 }
 
 .forecast-day .day {
-  font-size: 15px;
+  font-size: 17px;
   color: rgba(255,255,255,0.9);
   margin-bottom: 3px;
   font-weight: 600;
@@ -466,14 +553,14 @@ body {
 }
 
 .forecast-day .forecast-temp {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: white;
   margin: 3px 0;
 }
 
 .forecast-day .condition {
-  font-size: 13px;
+  font-size: 16px;
   color: rgba(255,255,255,0.8);
   line-height: 1.2;
   max-width: 65px;
@@ -511,6 +598,31 @@ body {
 
 .background-night {
   background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+}
+
+body.background-morning .pinned-item {
+  background: rgba(109, 213, 237, 0.3);
+  border-color: rgba(109, 213, 237, 0.5);
+}
+
+body.background-day .pinned-item {
+  background: rgba(79, 172, 254, 0.3);
+  border-color: rgba(79, 172, 254, 0.5);
+}
+
+body.background-afternoon .pinned-item {
+  background: rgba(255, 153, 102, 0.3);
+  border-color: rgba(255, 153, 102, 0.5);
+}
+
+body.background-evening .pinned-item {
+  background: rgba(250, 112, 154, 0.3);
+  border-color: rgba(250, 112, 154, 0.5);
+}
+
+body.background-night .pinned-item {
+  background: rgba(44, 62, 80, 0.4);
+  border-color: rgba(52, 152, 219, 0.5);
 }
 
 body.background-morning #citySearch {

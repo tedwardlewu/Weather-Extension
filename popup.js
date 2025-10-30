@@ -5,7 +5,7 @@ class WeatherExtension {
   constructor() {
     this.currentCity = 'London';
     this.recentSearches = [];
-    this.pinnedCities = [];
+    this.pinnedCities = []; // Store objects with name and localTime
     this.searchTimeout = null;
     this.init();
   }
@@ -29,7 +29,21 @@ class WeatherExtension {
         this.updateRecentSearches();
       }
       if (result.pinnedCities) {
-        this.pinnedCities = result.pinnedCities;
+        // Handle both string and object formats
+        if (result.pinnedCities.length > 0) {
+          if (typeof result.pinnedCities[0] === 'string') {
+            // Convert string format to object format
+            this.pinnedCities = result.pinnedCities.map(city => ({
+              name: city,
+              localTime: new Date().toISOString() // Default time
+            }));
+            this.savePinnedCities();
+          } else {
+            this.pinnedCities = result.pinnedCities;
+          }
+        } else {
+          this.pinnedCities = [];
+        }
         this.updatePinnedCities();
       }
     });
@@ -63,7 +77,6 @@ class WeatherExtension {
 
   addToRecentSearches(city) {
     this.recentSearches = this.recentSearches.filter(item => item !== city);
-    
     this.recentSearches.unshift(city);
     
     if (this.recentSearches.length > 5) {
@@ -74,22 +87,63 @@ class WeatherExtension {
     this.updateRecentSearches();
   }
 
-  togglePinCity(city) {
-    const index = this.pinnedCities.indexOf(city);
-    if (index > -1) {
-      this.pinnedCities.splice(index, 1);
+  async togglePinCity(city) {
+    const existingPinIndex = this.pinnedCities.findIndex(pin => pin.name === city);
+    
+    if (existingPinIndex > -1) {
+      // Unpin the city
+      this.pinnedCities.splice(existingPinIndex, 1);
+      this.savePinnedCities();
+      this.updatePinnedCities();
+      this.updatePinButton();
     } else {
-      this.pinnedCities.push(city);
+      // Pin the city - get current time data
+      const pinButton = document.getElementById('pinButton');
+      const originalText = pinButton.textContent;
+      pinButton.textContent = '...';
+      
+      try {
+        // Fetch weather data to get proper local time
+        const weatherData = await this.fetchWeatherDataForCity(city);
+        const pinnedCity = {
+          name: city,
+          localTime: weatherData.location.localtime
+        };
+        this.pinnedCities.push(pinnedCity);
+        this.savePinnedCities();
+        this.updatePinnedCities();
+        this.updatePinButton();
+      } catch (error) {
+        console.error('Error fetching weather for pin:', error);
+        // Fallback with current time
+        const pinnedCity = {
+          name: city,
+          localTime: new Date().toISOString()
+        };
+        this.pinnedCities.push(pinnedCity);
+        this.savePinnedCities();
+        this.updatePinnedCities();
+        this.updatePinButton();
+      }
     }
-    this.savePinnedCities();
-    this.updatePinnedCities();
-    this.updatePinButton();
+  }
+
+  async fetchWeatherDataForCity(city) {
+    const response = await fetch(
+      `${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(city)}&days=1&aqi=no&alerts=no`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
   }
 
   updatePinButton() {
     const pinButton = document.getElementById('pinButton');
     if (pinButton) {
-      const isPinned = this.pinnedCities.includes(this.currentCity);
+      const isPinned = this.pinnedCities.some(pin => pin.name === this.currentCity);
       pinButton.textContent = isPinned ? '📍' : '📌';
       pinButton.classList.toggle('pinned', isPinned);
     }
@@ -129,34 +183,67 @@ class WeatherExtension {
       pinnedContainer.classList.remove('hidden');
       pinnedList.innerHTML = '';
       
-      this.pinnedCities.forEach(city => {
+      this.pinnedCities.forEach((pinnedCity) => {
         const item = document.createElement('div');
         item.className = 'pinned-item';
         
+        // Add time-based color class
+        const timeClass = this.getTimePeriodClass(pinnedCity.localTime);
+        item.classList.add(timeClass);
+        
         const cityName = document.createElement('span');
-        cityName.textContent = city;
-        cityName.addEventListener('click', () => {
-          this.currentCity = city;
-          document.getElementById('citySearch').value = city;
-          this.fetchWeatherData();
-          this.hideSearchResults();
-          document.getElementById('recentSearches').classList.add('hidden');
-        });
+        cityName.className = 'pinned-city-name';
+        cityName.textContent = pinnedCity.name;
         
         const unpinButton = document.createElement('button');
         unpinButton.className = 'unpin-button';
         unpinButton.textContent = '✕';
         unpinButton.addEventListener('click', (e) => {
           e.stopPropagation();
-          this.togglePinCity(city);
+          e.preventDefault();
+          this.togglePinCity(pinnedCity.name);
         });
         
         item.appendChild(cityName);
         item.appendChild(unpinButton);
+        
+        // Make the entire item clickable (except the unpin button)
+        item.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('unpin-button')) {
+            this.currentCity = pinnedCity.name;
+            document.getElementById('citySearch').value = pinnedCity.name;
+            this.fetchWeatherData();
+            this.hideSearchResults();
+            document.getElementById('recentSearches').classList.add('hidden');
+            // DON'T hide pinned cities when clicking on them!
+          }
+        });
+        
         pinnedList.appendChild(item);
       });
     } else {
       pinnedContainer.classList.add('hidden');
+    }
+  }
+
+  getTimePeriodClass(localTime) {
+    try {
+      const hour = new Date(localTime).getHours();
+      
+      if (hour >= 6 && hour < 12) {
+        return 'pinned-morning';
+      } else if (hour >= 12 && hour < 15) {
+        return 'pinned-day';
+      } else if (hour >= 15 && hour < 18) {
+        return 'pinned-afternoon';
+      } else if (hour >= 18 && hour < 21) {
+        return 'pinned-evening';
+      } else {
+        return 'pinned-night';
+      }
+    } catch (error) {
+      console.error('Error parsing localTime:', localTime, error);
+      return 'pinned-day';
     }
   }
 
@@ -200,6 +287,7 @@ class WeatherExtension {
           this.currentCity = query;
           this.hideSearchResults();
           this.fetchWeatherData();
+          document.getElementById('recentSearches').classList.add('hidden');
           citySearch.blur();
         }
       }
@@ -213,10 +301,15 @@ class WeatherExtension {
     }
     
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.city-selector')) {
+      if (!e.target.closest('.city-selector') && 
+          !e.target.closest('.recent-searches') && 
+          !e.target.closest('.pinned-cities')) {
         this.hideSearchResults();
         document.getElementById('recentSearches').classList.add('hidden');
-        document.getElementById('pinnedCities').classList.add('hidden');
+        // Only hide pinned cities if clicking outside AND they're empty
+        if (this.pinnedCities.length === 0) {
+          document.getElementById('pinnedCities').classList.add('hidden');
+        }
       }
     });
   }
@@ -261,7 +354,7 @@ class WeatherExtension {
           this.hideSearchResults();
           this.fetchWeatherData();
           document.getElementById('recentSearches').classList.add('hidden');
-          document.getElementById('pinnedCities').classList.add('hidden');
+          // Don't hide pinned cities when selecting from search
         });
         resultsContainer.appendChild(resultItem);
       });
@@ -416,12 +509,10 @@ class WeatherExtension {
   }
 }
 
-// Initialize the extension when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   new WeatherExtension();
 });
 
-// Handle potential errors during initialization
 window.addEventListener('error', (event) => {
   console.error('Global error:', event.error);
 });
