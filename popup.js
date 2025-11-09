@@ -5,7 +5,7 @@ class WeatherExtension {
   constructor() {
     this.currentCity = 'London';
     this.recentSearches = [];
-    this.pinnedCities = []; // Store objects with name and localTime
+    this.pinnedCities = []; 
     this.searchTimeout = null;
     this.init();
   }
@@ -29,19 +29,23 @@ class WeatherExtension {
         this.updateRecentSearches();
       }
       if (result.pinnedCities) {
-        // Handle both string and object formats
         if (result.pinnedCities.length > 0) {
+
           if (typeof result.pinnedCities[0] === 'string') {
-            // Convert string format to object format
+
             this.pinnedCities = result.pinnedCities.map(city => ({
               name: city,
-              localTime: new Date().toISOString() // Default time
+              localTime: new Date().toISOString()
             }));
             this.savePinnedCities();
-          } else {
+          } 
+          
+          else {
             this.pinnedCities = result.pinnedCities;
           }
-        } else {
+        } 
+        
+        else {
           this.pinnedCities = [];
         }
         this.updatePinnedCities();
@@ -91,19 +95,16 @@ class WeatherExtension {
     const existingPinIndex = this.pinnedCities.findIndex(pin => pin.name === city);
     
     if (existingPinIndex > -1) {
-      // Unpin the city
       this.pinnedCities.splice(existingPinIndex, 1);
       this.savePinnedCities();
       this.updatePinnedCities();
       this.updatePinButton();
     } else {
-      // Pin the city - get current time data
       const pinButton = document.getElementById('pinButton');
       const originalText = pinButton.textContent;
       pinButton.textContent = '...';
       
       try {
-        // Fetch weather data to get proper local time
         const weatherData = await this.fetchWeatherDataForCity(city);
         const pinnedCity = {
           name: city,
@@ -115,7 +116,6 @@ class WeatherExtension {
         this.updatePinButton();
       } catch (error) {
         console.error('Error fetching weather for pin:', error);
-        // Fallback with current time
         const pinnedCity = {
           name: city,
           localTime: new Date().toISOString()
@@ -187,7 +187,6 @@ class WeatherExtension {
         const item = document.createElement('div');
         item.className = 'pinned-item';
         
-        // Add time-based color class
         const timeClass = this.getTimePeriodClass(pinnedCity.localTime);
         item.classList.add(timeClass);
         
@@ -207,7 +206,6 @@ class WeatherExtension {
         item.appendChild(cityName);
         item.appendChild(unpinButton);
         
-        // Make the entire item clickable (except the unpin button)
         item.addEventListener('click', (e) => {
           if (!e.target.classList.contains('unpin-button')) {
             this.currentCity = pinnedCity.name;
@@ -215,7 +213,6 @@ class WeatherExtension {
             this.fetchWeatherData();
             this.hideSearchResults();
             document.getElementById('recentSearches').classList.add('hidden');
-            // DON'T hide pinned cities when clicking on them!
           }
         });
         
@@ -232,16 +229,26 @@ class WeatherExtension {
       
       if (hour >= 6 && hour < 12) {
         return 'pinned-morning';
-      } else if (hour >= 12 && hour < 15) {
+      } 
+      
+      else if (hour >= 12 && hour < 15) {
         return 'pinned-day';
-      } else if (hour >= 15 && hour < 18) {
+      } 
+      
+      else if (hour >= 15 && hour < 18) {
         return 'pinned-afternoon';
-      } else if (hour >= 18 && hour < 21) {
+      } 
+      
+      else if (hour >= 18 && hour < 21) {
         return 'pinned-evening';
-      } else {
+      } 
+      
+      else {
         return 'pinned-night';
       }
-    } catch (error) {
+    } 
+    
+    catch (error) {
       console.error('Error parsing localTime:', localTime, error);
       return 'pinned-day';
     }
@@ -306,7 +313,7 @@ class WeatherExtension {
           !e.target.closest('.pinned-cities')) {
         this.hideSearchResults();
         document.getElementById('recentSearches').classList.add('hidden');
-        // Only hide pinned cities if clicking outside AND they're empty
+        
         if (this.pinnedCities.length === 0) {
           document.getElementById('pinnedCities').classList.add('hidden');
         }
@@ -354,7 +361,6 @@ class WeatherExtension {
           this.hideSearchResults();
           this.fetchWeatherData();
           document.getElementById('recentSearches').classList.add('hidden');
-          // Don't hide pinned cities when selecting from search
         });
         resultsContainer.appendChild(resultItem);
       });
@@ -383,6 +389,7 @@ class WeatherExtension {
       }
 
       const data = await response.json();
+      console.log('API Response:', data);
       this.displayWeatherData(data);
       this.updateBackground(data.location.localtime);
       
@@ -440,7 +447,78 @@ class WeatherExtension {
       data.current.uv;
 
     this.displayForecast(data.forecast.forecastday);
+    
+    const todayHourly = data.forecast.forecastday[0].hour;
+    this.Hourly(todayHourly, data.location.localtime);
   }
+
+  Hourly(hourlyData, localTime) {
+  const hourlyContainer = document.getElementById('hourlyForecast');
+  if (!hourlyContainer) {
+    console.error('Hourly container not found!');
+    return;
+  }
+
+  console.log('Displaying hourly forecast with data:', hourlyData);
+  console.log('Local time:', localTime);
+  
+  hourlyContainer.innerHTML = '';
+  
+  const now = new Date(localTime);
+  const currentHour = now.getHours();
+  
+  console.log('Current hour in city:', currentHour);
+
+  const currentHourIndex = hourlyData.findIndex(hour => {
+    const hourTime = new Date(hour.time);
+    return hourTime.getHours() === currentHour;
+  });
+
+  if (currentHourIndex === -1) {
+    console.log('Current hour not found in hourly data');
+    hourlyContainer.innerHTML = '<div class="no-hourly-data">No hourly data available</div>';
+    return;
+  }
+
+  const next5Hours = hourlyData.slice(currentHourIndex, currentHourIndex + 5);
+
+  console.log('Next 5 hours:', next5Hours);
+
+  if (next5Hours.length === 0) {
+    console.log('No hours found');
+    hourlyContainer.innerHTML = '<div class="no-hourly-data">No hourly data available</div>';
+    return;
+  }
+
+  next5Hours.forEach((hour, index) => {
+    const hourTime = new Date(hour.time);
+    const hourItem = document.createElement('div');
+    hourItem.className = 'hourly-item';
+    
+    let timeDisplay;
+
+    if (index === 0) {
+      timeDisplay = 'Now';
+    } 
+    
+    else {
+      timeDisplay = hourTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        hour12: true
+      }).replace(' AM', 'AM').replace(' PM', 'PM');
+    }
+    
+    hourItem.innerHTML = `
+      <div class="hourly-time">${timeDisplay}</div>
+      <img src="https:${hour.condition.icon}" alt="${hour.condition.text}" class="hourly-icon">
+      <div class="hourly-temp">${Math.round(hour.temp_c)}°</div>
+    `;
+    
+    hourlyContainer.appendChild(hourItem);
+  });
+
+  console.log('Hourly forecast displayed with', next5Hours.length, 'items');
+}
 
   displayForecast(forecastDays) {
     const forecastContainer = document.getElementById('forecastDays');
