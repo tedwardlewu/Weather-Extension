@@ -4,7 +4,6 @@ const BASE_URL = 'https://api.weatherapi.com/v1';
 class WeatherExtension {
   constructor() {
     this.currentCity = 'London';
-    this.recentSearches = [];
     this.pinnedCities = []; 
     this.searchTimeout = null;
     this.init();
@@ -12,52 +11,32 @@ class WeatherExtension {
 
   init() {
     this.loadSavedCity();
-    this.loadRecentSearches();
     this.loadPinnedCities();
     this.bindEvents();
     this.fetchWeatherData();
   }
 
   loadSavedCity() {
-    chrome.storage.local.get(['selectedCity', 'recentSearches', 'pinnedCities'], (result) => {
+    chrome.storage.local.get(['selectedCity', 'pinnedCities'], (result) => {
       if (result.selectedCity) {
         this.currentCity = result.selectedCity;
         document.getElementById('citySearch').value = this.currentCity;
       }
-      if (result.recentSearches) {
-        this.recentSearches = result.recentSearches;
-        this.updateRecentSearches();
-      }
       if (result.pinnedCities) {
         if (result.pinnedCities.length > 0) {
-
           if (typeof result.pinnedCities[0] === 'string') {
-
             this.pinnedCities = result.pinnedCities.map(city => ({
               name: city,
               localTime: new Date().toISOString()
             }));
             this.savePinnedCities();
-          } 
-          
-          else {
+          } else {
             this.pinnedCities = result.pinnedCities;
           }
-        } 
-        
-        else {
+        } else {
           this.pinnedCities = [];
         }
         this.updatePinnedCities();
-      }
-    });
-  }
-
-  loadRecentSearches() {
-    chrome.storage.local.get(['recentSearches'], (result) => {
-      if (result.recentSearches) {
-        this.recentSearches = result.recentSearches;
-        this.updateRecentSearches();
       }
     });
   }
@@ -71,24 +50,8 @@ class WeatherExtension {
     });
   }
 
-  saveRecentSearches() {
-    chrome.storage.local.set({ recentSearches: this.recentSearches });
-  }
-
   savePinnedCities() {
     chrome.storage.local.set({ pinnedCities: this.pinnedCities });
-  }
-
-  addToRecentSearches(city) {
-    this.recentSearches = this.recentSearches.filter(item => item !== city);
-    this.recentSearches.unshift(city);
-    
-    if (this.recentSearches.length > 5) {
-      this.recentSearches = this.recentSearches.slice(0, 5);
-    }
-    
-    this.saveRecentSearches();
-    this.updateRecentSearches();
   }
 
   async togglePinCity(city) {
@@ -149,32 +112,6 @@ class WeatherExtension {
     }
   }
 
-  updateRecentSearches() {
-    const recentList = document.getElementById('recentList');
-    const recentContainer = document.getElementById('recentSearches');
-    
-    if (this.recentSearches.length > 0) {
-      recentContainer.classList.remove('hidden');
-      recentList.innerHTML = '';
-      
-      this.recentSearches.forEach(city => {
-        const item = document.createElement('div');
-        item.className = 'recent-item';
-        item.textContent = city;
-        item.addEventListener('click', () => {
-          this.currentCity = city;
-          document.getElementById('citySearch').value = city;
-          this.fetchWeatherData();
-          this.hideSearchResults();
-          document.getElementById('recentSearches').classList.add('hidden');
-        });
-        recentList.appendChild(item);
-      });
-    } else {
-      recentContainer.classList.add('hidden');
-    }
-  }
-
   updatePinnedCities() {
     const pinnedList = document.getElementById('pinnedList');
     const pinnedContainer = document.getElementById('pinnedCities');
@@ -212,7 +149,6 @@ class WeatherExtension {
             document.getElementById('citySearch').value = pinnedCity.name;
             this.fetchWeatherData();
             this.hideSearchResults();
-            document.getElementById('recentSearches').classList.add('hidden');
           }
         });
         
@@ -229,26 +165,16 @@ class WeatherExtension {
       
       if (hour >= 6 && hour < 12) {
         return 'pinned-morning';
-      } 
-      
-      else if (hour >= 12 && hour < 15) {
+      } else if (hour >= 12 && hour < 15) {
         return 'pinned-day';
-      } 
-      
-      else if (hour >= 15 && hour < 18) {
+      } else if (hour >= 15 && hour < 18) {
         return 'pinned-afternoon';
-      } 
-      
-      else if (hour >= 18 && hour < 21) {
+      } else if (hour >= 18 && hour < 21) {
         return 'pinned-evening';
-      } 
-      
-      else {
+      } else {
         return 'pinned-night';
       }
-    } 
-    
-    catch (error) {
+    } catch (error) {
       console.error('Error parsing localTime:', localTime, error);
       return 'pinned-day';
     }
@@ -279,9 +205,6 @@ class WeatherExtension {
     });
     
     citySearch.addEventListener('focus', () => {
-      if (this.recentSearches.length > 0) {
-        document.getElementById('recentSearches').classList.remove('hidden');
-      }
       if (this.pinnedCities.length > 0) {
         document.getElementById('pinnedCities').classList.remove('hidden');
       }
@@ -294,7 +217,6 @@ class WeatherExtension {
           this.currentCity = query;
           this.hideSearchResults();
           this.fetchWeatherData();
-          document.getElementById('recentSearches').classList.add('hidden');
           citySearch.blur();
         }
       }
@@ -309,10 +231,8 @@ class WeatherExtension {
     
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.city-selector') && 
-          !e.target.closest('.recent-searches') && 
           !e.target.closest('.pinned-cities')) {
         this.hideSearchResults();
-        document.getElementById('recentSearches').classList.add('hidden');
         
         if (this.pinnedCities.length === 0) {
           document.getElementById('pinnedCities').classList.add('hidden');
@@ -360,7 +280,6 @@ class WeatherExtension {
           document.getElementById('citySearch').value = this.currentCity;
           this.hideSearchResults();
           this.fetchWeatherData();
-          document.getElementById('recentSearches').classList.add('hidden');
         });
         resultsContainer.appendChild(resultItem);
       });
@@ -393,7 +312,6 @@ class WeatherExtension {
       this.displayWeatherData(data);
       this.updateBackground(data.location.localtime);
       
-      this.addToRecentSearches(this.currentCity);
       chrome.storage.local.set({ selectedCity: this.currentCity });
       
       this.updatePinButton();
@@ -448,77 +366,80 @@ class WeatherExtension {
 
     this.displayForecast(data.forecast.forecastday);
     
+    // Add hourly forecast - get today's hourly data and pass local time
     const todayHourly = data.forecast.forecastday[0].hour;
-    this.Hourly(todayHourly, data.location.localtime);
+    this.displayHourlyForecast(todayHourly, data.location.localtime);
   }
 
-  Hourly(hourlyData, localTime) {
-  const hourlyContainer = document.getElementById('hourlyForecast');
-  if (!hourlyContainer) {
-    console.error('Hourly container not found!');
-    return;
-  }
-
-  console.log('Displaying hourly forecast with data:', hourlyData);
-  console.log('Local time:', localTime);
-  
-  hourlyContainer.innerHTML = '';
-  
-  const now = new Date(localTime);
-  const currentHour = now.getHours();
-  
-  console.log('Current hour in city:', currentHour);
-
-  const currentHourIndex = hourlyData.findIndex(hour => {
-    const hourTime = new Date(hour.time);
-    return hourTime.getHours() === currentHour;
-  });
-
-  if (currentHourIndex === -1) {
-    console.log('Current hour not found in hourly data');
-    hourlyContainer.innerHTML = '<div class="no-hourly-data">No hourly data available</div>';
-    return;
-  }
-
-  const next5Hours = hourlyData.slice(currentHourIndex, currentHourIndex + 5);
-
-  console.log('Next 5 hours:', next5Hours);
-
-  if (next5Hours.length === 0) {
-    console.log('No hours found');
-    hourlyContainer.innerHTML = '<div class="no-hourly-data">No hourly data available</div>';
-    return;
-  }
-
-  next5Hours.forEach((hour, index) => {
-    const hourTime = new Date(hour.time);
-    const hourItem = document.createElement('div');
-    hourItem.className = 'hourly-item';
-    
-    let timeDisplay;
-
-    if (index === 0) {
-      timeDisplay = 'Now';
-    } 
-    
-    else {
-      timeDisplay = hourTime.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        hour12: true
-      }).replace(' AM', 'AM').replace(' PM', 'PM');
+  displayHourlyForecast(hourlyData, localTime) {
+    const hourlyContainer = document.getElementById('hourlyForecast');
+    if (!hourlyContainer) {
+      console.error('Hourly container not found!');
+      return;
     }
-    
-    hourItem.innerHTML = `
-      <div class="hourly-time">${timeDisplay}</div>
-      <img src="https:${hour.condition.icon}" alt="${hour.condition.text}" class="hourly-icon">
-      <div class="hourly-temp">${Math.round(hour.temp_c)}°</div>
-    `;
-    
-    hourlyContainer.appendChild(hourItem);
-  });
 
-  console.log('Hourly forecast displayed with', next5Hours.length, 'items');
-}
+    console.log('Displaying hourly forecast with data:', hourlyData);
+    console.log('Local time:', localTime);
+    
+    // Clear previous content
+    hourlyContainer.innerHTML = '';
+    
+    // Get current time based on the city's local time
+    const now = new Date(localTime);
+    const currentHour = now.getHours();
+    
+    console.log('Current hour in city:', currentHour);
+
+    // Find the current hour in the hourly data
+    const currentHourIndex = hourlyData.findIndex(hour => {
+      const hourTime = new Date(hour.time);
+      return hourTime.getHours() === currentHour;
+    });
+
+    if (currentHourIndex === -1) {
+      console.log('Current hour not found in hourly data');
+      hourlyContainer.innerHTML = '<div class="no-hourly-data">No hourly data available</div>';
+      return;
+    }
+
+    // Get the next 5 hours: current hour + next 4 hours
+    const next5Hours = hourlyData.slice(currentHourIndex, currentHourIndex + 5);
+
+    console.log('Next 5 hours:', next5Hours);
+
+    if (next5Hours.length === 0) {
+      console.log('No hours found');
+      hourlyContainer.innerHTML = '<div class="no-hourly-data">No hourly data available</div>';
+      return;
+    }
+
+    next5Hours.forEach((hour, index) => {
+      const hourTime = new Date(hour.time);
+      const hourItem = document.createElement('div');
+      hourItem.className = 'hourly-item';
+      
+      // Format time label to show actual time (e.g., "2 PM", "3 PM")
+      let timeDisplay;
+      if (index === 0) {
+        timeDisplay = 'Now';
+      } else {
+        timeDisplay = hourTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          hour12: true
+        }).replace(' AM', 'AM').replace(' PM', 'PM');
+      }
+      
+      hourItem.innerHTML = `
+        <div class="hourly-time">${timeDisplay}</div>
+        <img src="https:${hour.condition.icon}" alt="${hour.condition.text}" class="hourly-icon">
+        <div class="hourly-temp">${Math.round(hour.temp_c)}°</div>
+      `;
+      
+      hourlyContainer.appendChild(hourItem);
+    });
+
+    console.log('Hourly forecast displayed with', next5Hours.length, 'items');
+  }
 
   displayForecast(forecastDays) {
     const forecastContainer = document.getElementById('forecastDays');
