@@ -629,7 +629,7 @@ body {
 }
 
 .background-morning {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #2b2b95 100%);
 }
 
 .background-day {
@@ -637,11 +637,11 @@ body {
 }
 
 .background-afternoon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #b98751 0%, #a33544 100%);
 }
 
 .background-evening {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  background: linear-gradient(135deg, #68cac5 0%, #2c3e50 100%);
 }
 
 .background-night {
