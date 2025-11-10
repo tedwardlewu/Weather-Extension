@@ -3,7 +3,7 @@ const BASE_URL = 'https://api.weatherapi.com/v1';
 
 class WeatherExtension {
   constructor() {
-    this.currentCity = 'London';
+    this.currentCity = null; 
     this.pinnedCities = []; 
     this.searchTimeout = null;
     this.init();
@@ -11,47 +11,41 @@ class WeatherExtension {
 
   init() {
     this.loadSavedCity();
-    this.loadPinnedCities();
     this.bindEvents();
-    this.fetchWeatherData();
   }
 
   loadSavedCity() {
     chrome.storage.local.get(['selectedCity', 'pinnedCities'], (result) => {
+      let cityToLoad = null;
+      let pinnedCitiesArray = result.pinnedCities || [];
+
       if (result.selectedCity) {
-        this.currentCity = result.selectedCity;
-        document.getElementById('citySearch').value = this.currentCity;
-      } else if (result.pinnedCities && result.pinnedCities.length > 0) {
-        // Open to the first pinned city if no selectedCity
-        this.currentCity = result.pinnedCities[0].name;
-        document.getElementById('citySearch').value = this.currentCity;
+        cityToLoad = result.selectedCity;
+      } else if (pinnedCitiesArray.length > 0) {
+        cityToLoad = pinnedCitiesArray[pinnedCitiesArray.length - 1].name;
+      } else {
+        cityToLoad = 'Waterloo'; // Changed from 'London'
       }
+      
+      this.currentCity = cityToLoad;
+      document.getElementById('citySearch').value = this.currentCity;
 
-      if (result.pinnedCities) {
-        if (result.pinnedCities.length > 0) {
-          if (typeof result.pinnedCities[0] === 'string') {
-            this.pinnedCities = result.pinnedCities.map(city => ({
-              name: city,
-              localTime: new Date().toISOString()
-            }));
-            this.savePinnedCities();
-          } else {
-            this.pinnedCities = result.pinnedCities;
-          }
+      if (pinnedCitiesArray.length > 0) {
+        if (typeof pinnedCitiesArray[0] === 'string') {
+          this.pinnedCities = pinnedCitiesArray.map(city => ({
+            name: city,
+            localTime: new Date().toISOString()
+          }));
+          this.savePinnedCities();
         } else {
-          this.pinnedCities = [];
+          this.pinnedCities = pinnedCitiesArray;
         }
-        this.updatePinnedCities();
+      } else {
+        this.pinnedCities = [];
       }
-    });
-  }
-
-  loadPinnedCities() {
-    chrome.storage.local.get(['pinnedCities'], (result) => {
-      if (result.pinnedCities) {
-        this.pinnedCities = result.pinnedCities;
-        this.updatePinnedCities();
-      }
+      
+      this.updatePinnedCities();
+      this.fetchWeatherData();
     });
   }
 
@@ -69,7 +63,6 @@ class WeatherExtension {
       this.updatePinButton();
     } else {
       const pinButton = document.getElementById('pinButton');
-      const originalText = pinButton.textContent;
       pinButton.textContent = '...';
       
       try {
@@ -129,7 +122,6 @@ class WeatherExtension {
         const item = document.createElement('div');
         item.className = 'pinned-item';
         
-        // Dynamically update background class based on local time
         const timeClass = this.getTimePeriodClass(pinnedCity.localTime);
         item.classList.add(timeClass);
         
@@ -319,7 +311,6 @@ class WeatherExtension {
       
       chrome.storage.local.set({ selectedCity: this.currentCity });
       
-      // Update pinnedCities localTime if this city is pinned
       this.pinnedCities = this.pinnedCities.map(pin => {
         if (pin.name === this.currentCity) pin.localTime = data.location.localtime;
         return pin;
