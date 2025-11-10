@@ -726,11 +726,11 @@ body.background-night #citySearch {
 
 .precipitation-next {
   display: flex;
-  justify-content: center; /* center the 5 boxes */
-  gap: 10px;              /* space between the boxes */
-  padding: 0;             /* remove extra padding */
-  margin-top: 0;          /* optional, depends on spacing */
-  background: none;       /* ensure no background */
+  justify-content: center; 
+  gap: 10px;              
+  padding: 0;            
+  margin-top: 0;         
+  background: none;       
 }
 
 .precip-hour {
@@ -738,7 +738,7 @@ body.background-night #citySearch {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 60px; /* smaller width to match other sections */
+  width: 60px; 
   padding: 8px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
