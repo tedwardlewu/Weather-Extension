@@ -16,34 +16,35 @@ class WeatherExtension {
     this.fetchWeatherData();
   }
 
- loadSavedCity() {
-  chrome.storage.local.get(['selectedCity', 'pinnedCities'], (result) => {
-    if (result.selectedCity) {
-      this.currentCity = result.selectedCity;
-    } 
+  loadSavedCity() {
+    chrome.storage.local.get(['selectedCity', 'pinnedCities'], (result) => {
+      if (result.selectedCity) {
+        this.currentCity = result.selectedCity;
+        document.getElementById('citySearch').value = this.currentCity;
+      } else if (result.pinnedCities && result.pinnedCities.length > 0) {
+        // Open to the first pinned city if no selectedCity
+        this.currentCity = result.pinnedCities[0].name;
+        document.getElementById('citySearch').value = this.currentCity;
+      }
 
-    else if (result.pinnedCities && result.pinnedCities.length > 0) {
-      this.currentCity = result.pinnedCities[0].name || 'London';
-    } 
-
-    else {
-      this.currentCity = 'London';
-    }
-
-    document.getElementById('citySearch').value = this.currentCity;
-
-  
-    if (result.pinnedCities) {
-      this.pinnedCities = result.pinnedCities.map(pin =>
-        typeof pin === 'string' ? { name: pin, localTime: new Date().toISOString() } : pin
-      );
-    }
-
-    this.updatePinnedCities();
-    this.updatePinButton();
-    this.fetchWeatherData();
-  });
-}
+      if (result.pinnedCities) {
+        if (result.pinnedCities.length > 0) {
+          if (typeof result.pinnedCities[0] === 'string') {
+            this.pinnedCities = result.pinnedCities.map(city => ({
+              name: city,
+              localTime: new Date().toISOString()
+            }));
+            this.savePinnedCities();
+          } else {
+            this.pinnedCities = result.pinnedCities;
+          }
+        } else {
+          this.pinnedCities = [];
+        }
+        this.updatePinnedCities();
+      }
+    });
+  }
 
   loadPinnedCities() {
     chrome.storage.local.get(['pinnedCities'], (result) => {
@@ -128,6 +129,7 @@ class WeatherExtension {
         const item = document.createElement('div');
         item.className = 'pinned-item';
         
+        // Dynamically update background class based on local time
         const timeClass = this.getTimePeriodClass(pinnedCity.localTime);
         item.classList.add(timeClass);
         
@@ -381,64 +383,68 @@ class WeatherExtension {
     this.displayHourlyForecast(todayHourly, data.location.localtime);
   }
 
-  displayPrecipitation(currentData, hourlyData) {
-    const precipitationContainer = document.getElementById('precipitation');
-    if (!precipitationContainer) return;
+ displayPrecipitation(currentData, hourlyData) {
+  const precipitationContainer = document.getElementById('precipitation');
+  if (!precipitationContainer) return;
 
-    const currentPrecip = currentData.precip_mm || 0;
-    const currentChance = currentData.chance_of_rain || currentData.chance_of_snow || 0;
+  const currentPrecip = currentData.precip_mm ?? 0;
+  const currentChance = currentData.chance_of_rain ?? currentData.chance_of_snow ?? 0;
 
+  let nextPrecipitation = [];
+  if (hourlyData && hourlyData.length > 0) {
     const now = new Date();
-    const nextPrecipitation = hourlyData
+    nextPrecipitation = hourlyData
       .filter(hour => new Date(hour.time) > now)
-      .slice(0, 6)
+      .slice(0, 5)
       .map(hour => ({
         time: new Date(hour.time),
-        chance: hour.chance_of_rain || hour.chance_of_snow || 0,
-        precip: hour.precip_mm || 0
+        chance: hour.chance_of_rain ?? hour.chance_of_snow ?? 0,
+        precip: hour.precip_mm ?? 0
       }));
-
-    let precipitationHTML = `
-      <div class="precipitation-current">
-        <div class="precip-label">Precipitation</div>
-        <div class="precip-bar-container">
-          <div class="precip-bar">
-            <div class="precip-bar-fill" style="width: ${Math.min(currentChance, 100)}%"></div>
-          </div>
-          <div class="precip-value">${currentPrecip}mm</div>
-        </div>
-        <div class="precip-chance">${currentChance}% chance</div>
-      </div>
-    `;
-
-    if (nextPrecipitation.length > 0) {
-      precipitationHTML += `<div class="precipitation-next">`;
-      nextPrecipitation.forEach(hour => {
-        const timeDisplay = hour.time.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          hour12: true
-        }).replace(' AM', 'AM').replace(' PM', 'PM');
-        
-        precipitationHTML += `
-          <div class="precip-hour">
-            <div class="precip-hour-time">${timeDisplay}</div>
-            <div class="precip-hour-bar-container">
-              <div class="precip-hour-bar">
-                <div class="precip-hour-bar-fill" style="width: ${Math.min(hour.chance, 100)}%"></div>
-              </div>
-            </div>
-            <div class="precip-hour-info">
-              <div class="precip-hour-chance">${hour.chance}%</div>
-              <div class="precip-hour-amount">${hour.precip}mm</div>
-            </div>
-          </div>
-        `;
-      });
-      precipitationHTML += `</div>`;
-    }
-
-    precipitationContainer.innerHTML = precipitationHTML;
   }
+
+  let precipitationHTML = `
+    <div class="precipitation-current">
+      <div class="precip-label">Precipitation</div>
+      <div class="precip-bar-container">
+        <div class="precip-bar">
+          <div class="precip-bar-fill" style="width: ${Math.min(currentChance, 100)}%"></div>
+        </div>
+        <div class="precip-value">${currentPrecip}mm</div>
+      </div>
+      <div class="precip-chance">${currentChance}% chance</div>
+    </div>
+  `;
+
+  if (nextPrecipitation.length > 0) {
+    precipitationHTML += `<div class="precipitation-next">`;
+    nextPrecipitation.forEach(hour => {
+      const timeDisplay = hour.time.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        hour12: true
+      }).replace(' AM', 'AM').replace(' PM', 'PM');
+
+      precipitationHTML += `
+        <div class="precip-hour">
+          <div class="precip-hour-time">${timeDisplay}</div>
+          <div class="precip-hour-bar-container">
+            <div class="precip-hour-bar">
+              <div class="precip-hour-bar-fill" style="width: ${Math.min(hour.chance, 100)}%"></div>
+            </div>
+          </div>
+          <div class="precip-hour-info">
+            <div class="precip-hour-chance">${hour.chance}%</div>
+            <div class="precip-hour-amount">${hour.precip}mm</div>
+          </div>
+        </div>
+      `;
+    });
+    precipitationHTML += `</div>`;
+  }
+
+  precipitationContainer.innerHTML = precipitationHTML;
+}
+
 
   displayHourlyForecast(hourlyData, localTime) {
     const hourlyContainer = document.getElementById('hourlyForecast');

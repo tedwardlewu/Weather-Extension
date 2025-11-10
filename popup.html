@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="popup.css">
+  <title>Weather Forecast</title>
 </head>
 <body>
   <div class="container">
@@ -17,10 +18,6 @@
           <div class="search-loading hidden"></div>
         </div>
         <div id="searchResults" class="search-results hidden"></div>
-      </div>
-      <div id="recentSearches" class="recent-searches hidden">
-        <div class="recent-title">Recent Searches</div>
-        <div class="recent-list" id="recentList"></div>
       </div>
       <div id="pinnedCities" class="pinned-cities hidden">
         <div class="pinned-title">Pinned Cities</div>
@@ -49,6 +46,19 @@
       
       <div class="condition-text" id="conditionText"></div>
 
+      <!-- Total Precipitation Section -->
+      <div class="total-precip-section">
+        <h3 class="precipitation-title">Total Precipitation Today</h3>
+        <div id="totalPrecipitation" class="total-precip-value">0 mm</div>
+      </div>
+
+      <!-- Precipitation Section -->
+      <div class="precipitation-section">
+        <h3 class="precipitation-title">Precipitation</h3>
+        <div id="precipitation" class="precipitation-data"></div>
+      </div>
+
+      <!-- 5-Hour Horizontal Forecast -->
       <div class="hourly-forecast">
         <h3>Next 5 Hours</h3>
         <div id="hourlyForecast" class="hourly-container"></div>

@@ -723,3 +723,228 @@ body.background-night #citySearch {
   background: rgba(255, 255, 255, 0.95);
   border-color: rgba(255, 255, 255, 0.5);
 }
+
+.precipitation-next {
+  display: flex;
+  justify-content: center; /* center the 5 boxes */
+  gap: 10px;              /* space between the boxes */
+  padding: 0;             /* remove extra padding */
+  margin-top: 0;          /* optional, depends on spacing */
+  background: none;       /* ensure no background */
+}
+
+.precip-hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 60px; /* smaller width to match other sections */
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.precip-hour:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.precip-hour-bar-container {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.precip-hour-bar-fill {
+  height: 100%;
+  width: 0%; 
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 3px 0 0 3px;
+  transition: width 0.4s ease;
+}
+
+.precip-hour-time,
+.precip-hour-chance,
+.precip-hour-amount {
+  font-size: 11px;
+  color: white;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.precipitation-title {
+  font-size: 18px;           
+  font-weight: 700;
+  color: white;             
+  text-align: center;      
+  margin: 12px 0;           
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.3); 
+  letter-spacing: 0.5px;
+}
+
+.precipitation-current {
+  display: none;
+}
+
+.precipitation-current {
+  margin: 10px 0;
+}
+
+.precip-label {
+  font-size: 13px;
+  color: white;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.precip-bar {
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+}
+
+.precip-bar-fill {
+  height: 100%;
+  background: #38bdf8; 
+  border-radius: 4px 0 0 4px;
+  transition: width 0.3s ease;
+}
+.total-precip-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;          
+  max-width: 360px;     
+  margin: 8px auto;    
+  padding: 6px 0;        
+  background: rgba(59, 130, 246, 0.15); 
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.total-precip-value {
+  font-size: 19px;      
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  margin-bottom: 2px;
+}
+
+.total-precip-section::after {
+  content: '';
+  display: block;
+  width: 60px;          
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 2px;
+  margin: 2px auto 0 auto;
+}
+
+.precipitation-section {
+  margin-bottom: 12px;
+}
+
+.precipitation-data {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.precipitation-current {
+  margin-bottom: 12px;
+}
+
+.precip-hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 60px;        
+  padding: 8px;       
+  background: rgba(255, 255, 255, 0.1); 
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.precip-label {
+  font-size: 14px;
+  color: white;
+  font-weight: 600;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.precip-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.precip-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.precip-value {
+  font-size: 12px;
+  color: white;
+  text-align: center;
+}
+
+
+.precip-hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 50px;
+}
+
+.precip-hour-time {
+  font-size: 11px;
+  color: white;
+  font-weight: 600;
+}
+
+.precip-hour-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.precip-hour-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.precip-hour-chance {
+  font-size: 10px;
+  color: white;
+  font-weight: 600;
+}
+
+.precip-hour-amount {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
