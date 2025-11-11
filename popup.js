@@ -24,7 +24,7 @@ class WeatherExtension {
       } else if (pinnedCitiesArray.length > 0) {
         cityToLoad = pinnedCitiesArray[pinnedCitiesArray.length - 1].name;
       } else {
-        cityToLoad = 'Waterloo'; // Changed from 'London'
+        cityToLoad = 'Waterloo'; 
       }
       
       this.currentCity = cityToLoad;
@@ -61,7 +61,9 @@ class WeatherExtension {
       this.savePinnedCities();
       this.updatePinnedCities();
       this.updatePinButton();
-    } else {
+    } 
+    
+    else {
       const pinButton = document.getElementById('pinButton');
       pinButton.textContent = '...';
       
@@ -376,7 +378,12 @@ class WeatherExtension {
 
  displayPrecipitation(currentData, hourlyData) {
   const precipitationContainer = document.getElementById('precipitation');
-  if (!precipitationContainer) return;
+  const totalPrecipContainer = document.getElementById('totalPrecipitation');
+  if (!precipitationContainer || !totalPrecipContainer) return;
+
+
+  const totalPrecip = this.calculateTotalPrecipitation(hourlyData);
+  totalPrecipContainer.textContent = `${totalPrecip} mm`;
 
   const currentPrecip = currentData.precip_mm ?? 0;
   const currentChance = currentData.chance_of_rain ?? currentData.chance_of_snow ?? 0;
@@ -434,6 +441,17 @@ class WeatherExtension {
   }
 
   precipitationContainer.innerHTML = precipitationHTML;
+}
+
+calculateTotalPrecipitation(hourlyData) {
+  if (!hourlyData || hourlyData.length === 0) return 0;
+  
+  let total = 0;
+  hourlyData.forEach(hour => {
+    total += hour.precip_mm ?? 0;
+  });
+  
+  return Math.round(total * 10) / 10; 
 }
 
 

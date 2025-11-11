@@ -229,11 +229,14 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  width: 100%;
 }
 
 .location-header h2 {
   margin: 0;
   flex: 1;
+  text-align: center;
+  margin-left: 30px;
 }
 
 /* Improved pinned item color schemes */
@@ -272,28 +275,6 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
-}
-
-.pin-button {
-  background: rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 8px;
-  color: white;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 6px 10px;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.pin-button:hover {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(1.1);
-}
-
-.pin-button.pinned {
-  background: rgba(255, 255, 255, 0.4);
-  color: #ffd700;
 }
 
 .search-results::-webkit-scrollbar {
@@ -375,6 +356,7 @@ body {
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255,255,255,0.3);
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  position: relative;
 }
 
 .location h2 {
@@ -420,7 +402,6 @@ body {
   border: 1px solid rgba(255,255,255,0.2);
   font-weight: 500;
 }
-
 
 .hourly-forecast {
   margin-bottom: 12px;
@@ -648,7 +629,6 @@ body {
   background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
 }
 
-
 body.background-morning .current-weather,
 body.background-morning .condition-text,
 body.background-morning .detail-item,
@@ -866,19 +846,6 @@ body.background-night #citySearch {
   margin-bottom: 12px;
 }
 
-.precip-hour {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 60px;        
-  padding: 8px;       
-  background: rgba(255, 255, 255, 0.1); 
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-}
-
 .precip-label {
   font-size: 14px;
   color: white;
@@ -907,7 +874,6 @@ body.background-night #citySearch {
   color: white;
   text-align: center;
 }
-
 
 .precip-hour {
   display: flex;
@@ -948,3 +914,39 @@ body.background-night #citySearch {
   color: rgba(255, 255, 255, 0.8);
 }
 
+.pin-city-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.pin-city-button {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.pin-city-button:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.pin-city-button.pinned {
+  background: rgba(255, 215, 0, 0.3);
+  border-color: rgba(255, 215, 0, 0.7);
+  color: #ffd700;
+}
+
+.pin-city-button.pinned:hover {
+  background: rgba(255, 215, 0, 0.4);
+  border-color: rgba(255, 215, 0, 0.9);
+}
