@@ -21,9 +21,13 @@ class WeatherExtension {
 
       if (result.selectedCity) {
         cityToLoad = result.selectedCity;
-      } else if (pinnedCitiesArray.length > 0) {
+      }
+      
+      else if (pinnedCitiesArray.length > 0) {
         cityToLoad = pinnedCitiesArray[pinnedCitiesArray.length - 1].name;
-      } else {
+      } 
+      
+      else {
         cityToLoad = 'Waterloo'; 
       }
       
@@ -40,7 +44,9 @@ class WeatherExtension {
         } else {
           this.pinnedCities = pinnedCitiesArray;
         }
-      } else {
+      } 
+      
+      else {
         this.pinnedCities = [];
       }
       
@@ -77,7 +83,9 @@ class WeatherExtension {
         this.savePinnedCities();
         this.updatePinnedCities();
         this.updatePinButton();
-      } catch (error) {
+      } 
+      
+      catch (error) {
         console.error('Error fetching weather for pin:', error);
         const pinnedCity = {
           name: city,
@@ -154,7 +162,9 @@ class WeatherExtension {
         
         pinnedList.appendChild(item);
       });
-    } else {
+    } 
+    
+    else {
       pinnedContainer.classList.add('hidden');
     }
   }
@@ -165,13 +175,21 @@ class WeatherExtension {
       
       if (hour >= 6 && hour < 12) {
         return 'pinned-morning';
-      } else if (hour >= 12 && hour < 15) {
+      }
+      
+      else if (hour >= 12 && hour < 15) {
         return 'pinned-day';
-      } else if (hour >= 15 && hour < 18) {
+      } 
+      
+      else if (hour >= 15 && hour < 18) {
         return 'pinned-afternoon';
-      } else if (hour >= 18 && hour < 21) {
+      } 
+      
+      else if (hour >= 18 && hour < 21) {
         return 'pinned-evening';
-      } else {
+      } 
+      
+      else {
         return 'pinned-night';
       }
     } catch (error) {
@@ -492,7 +510,9 @@ calculateTotalPrecipitation(hourlyData) {
       let timeDisplay;
       if (index === 0) {
         timeDisplay = 'Now';
-      } else {
+      } 
+      
+      else {
         timeDisplay = hourTime.toLocaleTimeString('en-US', {
           hour: 'numeric',
           hour12: true
@@ -537,13 +557,21 @@ calculateTotalPrecipitation(hourlyData) {
     
     if (hour >= 6 && hour < 12) {
       body.classList.add('background-morning');
-    } else if (hour >= 12 && hour < 15) {
+    } 
+    
+    else if (hour >= 12 && hour < 15) {
       body.classList.add('background-day');
-    } else if (hour >= 15 && hour < 18) {
+    } 
+    
+    else if (hour >= 15 && hour < 18) {
       body.classList.add('background-afternoon');
-    } else if (hour >= 18 && hour < 21) {
+    } 
+    
+    else if (hour >= 18 && hour < 21) {
       body.classList.add('background-evening');
-    } else {
+    } 
+    
+    else {
       body.classList.add('background-night');
     }
   }
