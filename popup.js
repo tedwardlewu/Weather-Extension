@@ -17,14 +17,14 @@ class WeatherExtension {
   loadSavedCity() {
     chrome.storage.local.get(['selectedCity', 'pinnedCities'], (result) => {
       let cityToLoad = null;
-      let pinnedCitiesArray = result.pinnedCities || [];
+      let pinArray = result.pinnedCities || [];
 
       if (result.selectedCity) {
         cityToLoad = result.selectedCity;
       }
       
-      else if (pinnedCitiesArray.length > 0) {
-        cityToLoad = pinnedCitiesArray[pinnedCitiesArray.length - 1].name;
+      else if (pinArray.length > 0) {
+        cityToLoad = pinArray[pinArray.length - 1].name;
       } 
       
       else {
@@ -34,15 +34,15 @@ class WeatherExtension {
       this.currentCity = cityToLoad;
       document.getElementById('citySearch').value = this.currentCity;
 
-      if (pinnedCitiesArray.length > 0) {
-        if (typeof pinnedCitiesArray[0] === 'string') {
-          this.pinnedCities = pinnedCitiesArray.map(city => ({
+      if (pinArray.length > 0) {
+        if (typeof pinArray[0] === 'string') {
+          this.pinnedCities = pinArray.map(city => ({
             name: city,
             localTime: new Date().toISOString()
           }));
           this.savePinnedCities();
         } else {
-          this.pinnedCities = pinnedCitiesArray;
+          this.pinnedCities = pinArray;
         }
       } 
       
@@ -50,7 +50,7 @@ class WeatherExtension {
         this.pinnedCities = [];
       }
       
-      this.updatePinnedCities();
+      this.updateC();
       this.fetchWeatherData();
     });
   }
@@ -65,7 +65,7 @@ class WeatherExtension {
     if (existingPinIndex > -1) {
       this.pinnedCities.splice(existingPinIndex, 1);
       this.savePinnedCities();
-      this.updatePinnedCities();
+      this.updateC();
       this.updatePinButton();
     } 
     
@@ -74,14 +74,14 @@ class WeatherExtension {
       pinButton.textContent = '...';
       
       try {
-        const weatherData = await this.fetchWeatherDataForCity(city);
+        const weatherData = await this.fetchCity(city);
         const pinnedCity = {
           name: city,
           localTime: weatherData.location.localtime
         };
         this.pinnedCities.push(pinnedCity);
         this.savePinnedCities();
-        this.updatePinnedCities();
+        this.updateC();
         this.updatePinButton();
       } 
       
@@ -93,13 +93,13 @@ class WeatherExtension {
         };
         this.pinnedCities.push(pinnedCity);
         this.savePinnedCities();
-        this.updatePinnedCities();
+        this.updateC();
         this.updatePinButton();
       }
     }
   }
 
-  async fetchWeatherDataForCity(city) {
+  async fetchCity(city) {
     const response = await fetch(
       `${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(city)}&days=1&aqi=no&alerts=no`
     );
@@ -120,7 +120,7 @@ class WeatherExtension {
     }
   }
 
-  updatePinnedCities() {
+  updateC() {
     const pinnedList = document.getElementById('pinnedList');
     const pinnedContainer = document.getElementById('pinnedCities');
     
@@ -288,7 +288,8 @@ class WeatherExtension {
       noResult.style.color = '#64748b';
       noResult.style.cursor = 'default';
       resultsContainer.appendChild(noResult);
-    } else {
+    }
+     else {
       cities.forEach(city => {
         const resultItem = document.createElement('div');
         resultItem.className = 'search-result-item';
@@ -335,7 +336,7 @@ class WeatherExtension {
         if (pin.name === this.currentCity) pin.localTime = data.location.localtime;
         return pin;
       });
-      this.updatePinnedCities();
+      this.updateC();
       this.updatePinButton();
     } catch (error) {
       console.error('Weather fetch error:', error);
@@ -383,7 +384,7 @@ class WeatherExtension {
     document.getElementById('visibility').textContent = 
       `${data.current.vis_km} km`;
 
-    document.getElementById('uv').textContent = 
+   document.getElementById('uv').textContent = 
       data.current.uv;
 
     this.displayPrecipitation(data.current, data.forecast.forecastday[0].hour);
@@ -395,12 +396,12 @@ class WeatherExtension {
   }
 
  displayPrecipitation(currentData, hourlyData) {
-  const precipitationContainer = document.getElementById('precipitation');
+  const pContainer = document.getElementById('precipitation');
   const totalPrecipContainer = document.getElementById('totalPrecipitation');
-  if (!precipitationContainer || !totalPrecipContainer) return;
+  if (!pContainer || !totalPrecipContainer) return;
 
 
-  const totalPrecip = this.calculateTotalPrecipitation(hourlyData);
+  const totalPrecip = this.calculateSum(hourlyData);
   totalPrecipContainer.textContent = `${totalPrecip} mm`;
 
   const currentPrecip = currentData.precip_mm ?? 0;
@@ -458,10 +459,10 @@ class WeatherExtension {
     precipitationHTML += `</div>`;
   }
 
-  precipitationContainer.innerHTML = precipitationHTML;
+  pContainer.innerHTML = precipitationHTML;
 }
 
-calculateTotalPrecipitation(hourlyData) {
+calculateSum(hourlyData) {
   if (!hourlyData || hourlyData.length === 0) return 0;
   
   let total = 0;
