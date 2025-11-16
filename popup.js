@@ -1,10 +1,10 @@
-const API_KEY = '52dcbd0a6754456ebaf83447250710';
+const API_KEY = 'da9393ec436a49ef8b332007251611';
 const BASE_URL = 'https://api.weatherapi.com/v1';
 
 class WeatherExtension {
   constructor() {
-    this.currentCity = null; 
-    this.pinnedCities = []; 
+    this.currentCity = null;
+    this.pinnedCities = [];
     this.searchTimeout = null;
     this.init();
   }
@@ -19,37 +19,25 @@ class WeatherExtension {
       let cityToLoad = null;
       let pinArray = result.pinnedCities || [];
 
-      if (result.selectedCity) {
-        cityToLoad = result.selectedCity;
-      }
-      
-      else if (pinArray.length > 0) {
-        cityToLoad = pinArray[pinArray.length - 1].name;
-      } 
-      
-      else {
-        cityToLoad = 'Waterloo'; 
-      }
-      
+      if (result.selectedCity) cityToLoad = result.selectedCity;
+      else if (pinArray.length > 0) cityToLoad = pinArray[pinArray.length - 1].name;
+      else cityToLoad = 'Waterloo';
+
       this.currentCity = cityToLoad;
-      document.getElementById('citySearch').value = this.currentCity;
+      const searchEl = document.getElementById('citySearch');
+      if (searchEl) searchEl.value = this.currentCity;
 
       if (pinArray.length > 0) {
         if (typeof pinArray[0] === 'string') {
-          this.pinnedCities = pinArray.map(city => ({
-            name: city,
-            localTime: new Date().toISOString()
-          }));
+          this.pinnedCities = pinArray.map(city => ({ name: city, localTime: '00:00' }));
           this.savePinnedCities();
         } else {
           this.pinnedCities = pinArray;
         }
-      } 
-      
-      else {
+      } else {
         this.pinnedCities = [];
       }
-      
+
       this.updateC();
       this.fetchWeatherData();
     });
@@ -61,215 +49,149 @@ class WeatherExtension {
 
   async togglePinCity(city) {
     const existingPinIndex = this.pinnedCities.findIndex(pin => pin.name === city);
-    
     if (existingPinIndex > -1) {
       this.pinnedCities.splice(existingPinIndex, 1);
       this.savePinnedCities();
       this.updateC();
       this.updatePinButton();
-    } 
-    
-    else {
-      const pinButton = document.getElementById('pinButton');
-      pinButton.textContent = '...';
-      
-      try {
-        const weatherData = await this.fetchCity(city);
-        const pinnedCity = {
-          name: city,
-          localTime: weatherData.location.localtime
-        };
-        this.pinnedCities.push(pinnedCity);
-        this.savePinnedCities();
-        this.updateC();
-        this.updatePinButton();
-      } 
-      
-      catch (error) {
-        console.error('Error fetching weather for pin:', error);
-        const pinnedCity = {
-          name: city,
-          localTime: new Date().toISOString()
-        };
-        this.pinnedCities.push(pinnedCity);
-        this.savePinnedCities();
-        this.updateC();
-        this.updatePinButton();
-      }
+      return;
     }
+
+    const pinButton = document.getElementById('pinButton');
+    if (pinButton) pinButton.textContent = '...';
+
+    try {
+      const weatherData = await this.fetchCity(city);
+      const pinnedCity = { name: city, localTime: weatherData.location.localtime };
+      this.pinnedCities.push(pinnedCity);
+    } catch (error) {
+      const pinnedCity = { name: city, localTime: '00:00' };
+      this.pinnedCities.push(pinnedCity);
+    }
+
+    this.savePinnedCities();
+    this.updateC();
+    this.updatePinButton();
   }
 
   async fetchCity(city) {
-    const response = await fetch(
-      `${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(city)}&days=1&aqi=no&alerts=no`
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const res = await fetch(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(city)}&days=1&aqi=no&alerts=no`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP error ${res.status}`);
     }
-
-    return await response.json();
+    return res.json();
   }
 
   updatePinButton() {
     const pinButton = document.getElementById('pinButton');
-    if (pinButton) {
-      const isPinned = this.pinnedCities.some(pin => pin.name === this.currentCity);
-      pinButton.textContent = isPinned ? '❌' : '📌';
-      pinButton.classList.toggle('pinned', isPinned);
-    }
+    if (!pinButton) return;
+    const isPinned = this.pinnedCities.some(pin => pin.name === this.currentCity);
+    pinButton.textContent = isPinned ? '❌' : '📌';
+    pinButton.classList.toggle('pinned', isPinned);
   }
 
   updateC() {
     const pinnedList = document.getElementById('pinnedList');
     const pinnedContainer = document.getElementById('pinnedCities');
-    
+    if (!pinnedList || !pinnedContainer) return;
+
     if (this.pinnedCities.length > 0) {
       pinnedContainer.classList.remove('hidden');
       pinnedList.innerHTML = '';
-      
       this.pinnedCities.forEach((pinnedCity) => {
         const item = document.createElement('div');
         item.className = 'pinned-item';
-        
-        const timeClass = this.getTimePeriodClass(pinnedCity.localTime);
+        const timeClass = this.getTimePeriodClassFromHour(this.getHourFromLocalTime(pinnedCity.localTime));
         item.classList.add(timeClass);
-        
+
         const cityName = document.createElement('span');
         cityName.className = 'pinned-city-name';
         cityName.textContent = pinnedCity.name;
-        
+
         const unpinButton = document.createElement('button');
         unpinButton.className = 'unpin-button';
         unpinButton.textContent = '✕';
-        unpinButton.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          this.togglePinCity(pinnedCity.name);
-        });
-        
+        unpinButton.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); this.togglePinCity(pinnedCity.name); });
+
         item.appendChild(cityName);
         item.appendChild(unpinButton);
-        
         item.addEventListener('click', (e) => {
           if (!e.target.classList.contains('unpin-button')) {
             this.currentCity = pinnedCity.name;
-            document.getElementById('citySearch').value = pinnedCity.name;
+            const searchEl = document.getElementById('citySearch');
+            if (searchEl) searchEl.value = pinnedCity.name;
             this.fetchWeatherData();
             this.hideSearchResults();
           }
         });
-        
+
         pinnedList.appendChild(item);
       });
-    } 
-    
-    else {
+    } else {
       pinnedContainer.classList.add('hidden');
     }
   }
 
-  getTimePeriodClass(localTime) {
+  getHourFromLocalTime(localTime) {
+    // API returns "YYYY-MM-DD HH:MM"
     try {
-      const hour = new Date(localTime).getHours();
-      
-      if (hour >= 6 && hour < 12) {
-        return 'pinned-morning';
-      }
-      
-      else if (hour >= 12 && hour < 15) {
-        return 'pinned-day';
-      } 
-      
-      else if (hour >= 15 && hour < 18) {
-        return 'pinned-afternoon';
-      } 
-      
-      else if (hour >= 18 && hour < 21) {
-        return 'pinned-evening';
-      } 
-      
-      else {
-        return 'pinned-night';
-      }
-    } catch (error) {
-      console.error('Error parsing localTime:', localTime, error);
-      return 'pinned-day';
+      return parseInt(localTime.split(' ')[1].split(':')[0]);
+    } catch {
+      return 12; // default noon if parsing fails
     }
+  }
+
+  getTimePeriodClassFromHour(hour) {
+    if (hour >= 6 && hour < 12) return 'pinned-morning';
+    if (hour >= 12 && hour < 15) return 'pinned-day';
+    if (hour >= 15 && hour < 18) return 'pinned-afternoon';
+    if (hour >= 18 && hour < 21) return 'pinned-evening';
+    return 'pinned-night';
   }
 
   bindEvents() {
     const citySearch = document.getElementById('citySearch');
     const searchLoading = document.querySelector('.search-loading');
-    
-    citySearch.addEventListener('input', (e) => {
-      const query = e.target.value.trim();
-      
-      if (this.searchTimeout) {
-        clearTimeout(this.searchTimeout);
-      }
-      
-      if (query.length > 2) {
-        searchLoading.classList.remove('hidden');
-        this.searchTimeout = setTimeout(() => {
-          this.searchCities(query).finally(() => {
-            searchLoading.classList.add('hidden');
-          });
-        }, 300);
-      } else {
-        this.hideSearchResults();
-        searchLoading.classList.add('hidden');
-      }
-    });
-    
-    citySearch.addEventListener('focus', () => {
-      if (this.pinnedCities.length > 0) {
-        document.getElementById('pinnedCities').classList.remove('hidden');
-      }
-    });
-    
-    citySearch.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
+    if (citySearch) {
+      citySearch.addEventListener('input', (e) => {
         const query = e.target.value.trim();
-        if (query) {
-          this.currentCity = query;
+        if (this.searchTimeout) clearTimeout(this.searchTimeout);
+        if (query.length > 2) {
+          if (searchLoading) searchLoading.classList.remove('hidden');
+          this.searchTimeout = setTimeout(() => { this.searchCities(query).finally(() => { if (searchLoading) searchLoading.classList.add('hidden'); }); }, 300);
+        } else {
           this.hideSearchResults();
-          this.fetchWeatherData();
-          citySearch.blur();
+          if (searchLoading) searchLoading.classList.add('hidden');
         }
-      }
-    });
-    
-    const pinButton = document.getElementById('pinButton');
-    if (pinButton) {
-      pinButton.addEventListener('click', () => {
-        this.togglePinCity(this.currentCity);
+      });
+
+      citySearch.addEventListener('focus', () => { if (this.pinnedCities.length > 0) document.getElementById('pinnedCities').classList.remove('hidden'); });
+
+      citySearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const query = e.target.value.trim();
+          if (query) { this.currentCity = query; this.hideSearchResults(); this.fetchWeatherData(); citySearch.blur(); }
+        }
       });
     }
-    
+
+    const pinButton = document.getElementById('pinButton');
+    if (pinButton) pinButton.addEventListener('click', () => this.togglePinCity(this.currentCity));
+
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.city-selector') && 
-          !e.target.closest('.pinned-cities')) {
+      if (!e.target.closest('.city-selector') && !e.target.closest('.pinned-cities')) {
         this.hideSearchResults();
-        
-        if (this.pinnedCities.length === 0) {
-          document.getElementById('pinnedCities').classList.add('hidden');
-        }
+        if (this.pinnedCities.length === 0) document.getElementById('pinnedCities').classList.add('hidden');
       }
     });
   }
 
   async searchCities(query) {
     try {
-      const response = await fetch(
-        `${BASE_URL}/search.json?key=${API_KEY}&q=${encodeURIComponent(query)}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const res = await fetch(`${BASE_URL}/search.json?key=${API_KEY}&q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const data = await res.json();
       this.displaySearchResults(data);
     } catch (error) {
       console.error('Search error:', error);
@@ -279,37 +201,34 @@ class WeatherExtension {
 
   displaySearchResults(cities) {
     const resultsContainer = document.getElementById('searchResults');
+    if (!resultsContainer) return;
     resultsContainer.innerHTML = '';
-    
-    if (cities.length === 0) {
+    if (!cities || cities.length === 0) {
       const noResult = document.createElement('div');
       noResult.className = 'search-result-item';
       noResult.textContent = 'No cities found';
       noResult.style.color = '#64748b';
       noResult.style.cursor = 'default';
       resultsContainer.appendChild(noResult);
-    }
-     else {
+    } else {
       cities.forEach(city => {
         const resultItem = document.createElement('div');
         resultItem.className = 'search-result-item';
         resultItem.textContent = `${city.name}, ${city.country}`;
         resultItem.addEventListener('click', () => {
           this.currentCity = `${city.name}, ${city.country}`;
-          document.getElementById('citySearch').value = this.currentCity;
+          const searchEl = document.getElementById('citySearch');
+          if (searchEl) searchEl.value = this.currentCity;
           this.hideSearchResults();
           this.fetchWeatherData();
         });
         resultsContainer.appendChild(resultItem);
       });
     }
-    
     resultsContainer.classList.remove('hidden');
   }
 
-  hideSearchResults() {
-    document.getElementById('searchResults').classList.add('hidden');
-  }
+  hideSearchResults() { const el = document.getElementById('searchResults'); if (el) el.classList.add('hidden'); }
 
   async fetchWeatherData() {
     this.showLoading();
@@ -317,272 +236,192 @@ class WeatherExtension {
     this.hideWeatherData();
 
     try {
-      const response = await fetch(
-        `${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(this.currentCity)}&days=3&aqi=no&alerts=no`
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+      const res = await fetch(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(this.currentCity)}&days=3&aqi=no&alerts=no`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP error ${res.status}`);
       }
+      const data = await res.json();
+      
+      // FIX: Combine hourly data from day 1 and day 2 to ensure we have future hours
+      const hourlyDay1 = (data.forecast && data.forecast.forecastday && data.forecast.forecastday[0] && data.forecast.forecastday[0].hour) || [];
+      const hourlyDay2 = (data.forecast && data.forecast.forecastday && data.forecast.forecastday[1] && data.forecast.forecastday[1].hour) || [];
+      const allHourlyData = [...hourlyDay1, ...hourlyDay2];
 
-      const data = await response.json();
-      this.displayWeatherData(data);
-      this.updateBackground(data.location.localtime);
-      
+      this.displayWeatherData(data, allHourlyData);
+
+      // use API time directly
+      const cityHour = this.getHourFromLocalTime(data.location.localtime);
+      this.updateBackground(cityHour);
+
       chrome.storage.local.set({ selectedCity: this.currentCity });
-      
-      this.pinnedCities = this.pinnedCities.map(pin => {
-        if (pin.name === this.currentCity) pin.localTime = data.location.localtime;
-        return pin;
-      });
+      this.pinnedCities = this.pinnedCities.map(pin => { if (pin.name === this.currentCity) pin.localTime = data.location.localtime; return pin; });
       this.updateC();
       this.updatePinButton();
     } catch (error) {
       console.error('Weather fetch error:', error);
       this.showError(`Failed to fetch weather data: ${error.message}`);
+      this.hideLoading();
     }
   }
 
-  displayWeatherData(data) {
+  displayWeatherData(data, allHourlyData) { // Added allHourlyData as a parameter
     this.hideLoading();
     this.showWeatherData();
-    
-    document.getElementById('locationName').textContent = 
-      `${data.location.name}, ${data.location.country}`;
 
-    document.getElementById('currentDate').textContent = 
-      new Date(data.location.localtime).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+    const locName = document.getElementById('locationName');
+    if (locName) locName.textContent = `${data.location.name}, ${data.location.country}`;
 
-    document.getElementById('currentTemp').textContent = 
-      `${Math.round(data.current.temp_c)}°C`;
+    const currentDate = document.getElementById('currentDate');
+    if (currentDate) currentDate.textContent = data.location.localtime.split(' ')[0];
 
-    document.getElementById('conditionText').textContent = 
-      data.current.condition.text;
+    const currentTemp = document.getElementById('currentTemp');
+    if (currentTemp) currentTemp.textContent = `${Math.round(data.current.temp_c)}°C`;
+
+    const conditionText = document.getElementById('conditionText');
+    if (conditionText) conditionText.textContent = data.current.condition.text;
 
     const weatherIcon = document.getElementById('weatherIcon');
-    weatherIcon.src = `https:${data.current.condition.icon}`;
-    weatherIcon.alt = data.current.condition.text;
+    if (weatherIcon) { weatherIcon.src = `https:${data.current.condition.icon}`; weatherIcon.alt = data.current.condition.text; }
 
-    document.getElementById('feelsLike').textContent = 
-      `${Math.round(data.current.feelslike_c)}°C`;
+    const feelsLike = document.getElementById('feelsLike');
+    if (feelsLike) feelsLike.textContent = `${Math.round(data.current.feelslike_c)}°C`;
 
-    document.getElementById('humidity').textContent = 
-      `${data.current.humidity}%`;
+    const humidity = document.getElementById('humidity');
+    if (humidity) humidity.textContent = `${data.current.humidity}%`;
 
-    document.getElementById('wind').textContent = 
-      `${data.current.wind_kph} km/h`;
+    const wind = document.getElementById('wind');
+    if (wind) wind.textContent = `${data.current.wind_kph} km/h`;
 
-    document.getElementById('pressure').textContent = 
-      `${data.current.pressure_mb} mb`;
+    const pressure = document.getElementById('pressure');
+    if (pressure) pressure.textContent = `${data.current.pressure_mb} mb`;
 
-    document.getElementById('visibility').textContent = 
-      `${data.current.vis_km} km`;
+    const visibility = document.getElementById('visibility');
+    if (visibility) visibility.textContent = `${data.current.vis_km} km`;
 
-   document.getElementById('uv').textContent = 
-      data.current.uv;
+    const uv = document.getElementById('uv');
+    if (uv) uv.textContent = data.current.uv;
 
-    this.displayPrecipitation(data.current, data.forecast.forecastday[0].hour);
-
+    this.displayPrecipitation(data.current, allHourlyData, data.location.localtime);
     this.displayForecast(data.forecast.forecastday);
-    
-    const todayHourly = data.forecast.forecastday[0].hour;
-    this.displayHourlyForecast(todayHourly, data.location.localtime);
+    this.displayHourlyForecast(allHourlyData, data.location.localtime);
   }
 
- displayPrecipitation(currentData, hourlyData) {
-  const pContainer = document.getElementById('precipitation');
-  const totalPrecipContainer = document.getElementById('totalPrecipitation');
-  if (!pContainer || !totalPrecipContainer) return;
+  displayPrecipitation(currentData, allHourlyData, localTime) {
+    const pContainer = document.getElementById('precipitation');
+    const totalPrecipContainer = document.getElementById('totalPrecipitation');
+    if (!pContainer || !totalPrecipContainer) return;
 
+    // Sum for the next 24 hours (first 24 entries in combined data)
+    const totalPrecip = this.calculateSum(allHourlyData.slice(0, 24)); 
+    totalPrecipContainer.textContent = `${totalPrecip} mm`;
 
-  const totalPrecip = this.calculateSum(hourlyData);
-  totalPrecipContainer.textContent = `${totalPrecip} mm`;
+    const currentPrecip = currentData.precip_mm ?? 0;
+    const currentChance = currentData.chance_of_rain ?? currentData.chance_of_snow ?? 0;
 
-  const currentPrecip = currentData.precip_mm ?? 0;
-  const currentChance = currentData.chance_of_rain ?? currentData.chance_of_snow ?? 0;
+    let nextPrecipitation = [];
+    if (allHourlyData.length > 0) {
+      // FIX: Use Date timestamp for accurate future hour comparison
+      const currentTimeMs = new Date(localTime.replace(/-/g, '/')).getTime(); 
 
-  let nextPrecipitation = [];
-  if (hourlyData && hourlyData.length > 0) {
-    const now = new Date();
-    nextPrecipitation = hourlyData
-      .filter(hour => new Date(hour.time) > now)
-      .slice(0, 5)
-      .map(hour => ({
-        time: new Date(hour.time),
-        chance: hour.chance_of_rain ?? hour.chance_of_snow ?? 0,
-        precip: hour.precip_mm ?? 0
-      }));
+      nextPrecipitation = allHourlyData
+        .filter(h => {
+          const hourTimeMs = new Date(h.time.replace(/-/g, '/')).getTime();
+          // Filter to include the current hour and all future hours
+          return hourTimeMs >= currentTimeMs;
+        })
+        .slice(0, 5)
+        .map(hour => ({
+          time: hour.time,
+          chance: hour.chance_of_rain ?? hour.chance_of_snow ?? 0,
+          precip: hour.precip_mm ?? 0
+        }));
+    }
+
+    let precipitationHTML = `<div class="precipitation-current"><div class="precip-label">Precipitation</div><div class="precip-bar-container"><div class="precip-bar"><div class="precip-bar-fill" style="width: ${Math.min(currentChance, 100)}%"></div></div><div class="precip-value">${currentPrecip}mm</div></div><div class="precip-chance">${currentChance}% chance</div></div>`;
+
+    if (nextPrecipitation.length > 0) {
+      precipitationHTML += `<div class="precipitation-next">`;
+      nextPrecipitation.forEach(hour => {
+        const hourNum = parseInt(hour.time.split(' ')[1].split(':')[0]);
+        const hourDisplay = `${hourNum % 12 === 0 ? 12 : hourNum % 12}${hourNum >= 12 ? 'PM' : 'AM'}`;
+
+        precipitationHTML += `<div class="precip-hour"><div class="precip-hour-time">${hourDisplay}</div><div class="precip-hour-bar-container"><div class="precip-hour-bar"><div class="precip-hour-bar-fill" style="width: ${Math.min(hour.chance, 100)}%"></div></div></div><div class="precip-hour-info"><div class="precip-hour-chance">${hour.chance}%</div><div class="precip-hour-amount">${hour.precip}mm</div></div></div>`;
+      });
+      precipitationHTML += `</div>`;
+    }
+
+    pContainer.innerHTML = precipitationHTML;
   }
 
-  let precipitationHTML = `
-    <div class="precipitation-current">
-      <div class="precip-label">Precipitation</div>
-      <div class="precip-bar-container">
-        <div class="precip-bar">
-          <div class="precip-bar-fill" style="width: ${Math.min(currentChance, 100)}%"></div>
-        </div>
-        <div class="precip-value">${currentPrecip}mm</div>
-      </div>
-      <div class="precip-chance">${currentChance}% chance</div>
-    </div>
-  `;
-
-  if (nextPrecipitation.length > 0) {
-    precipitationHTML += `<div class="precipitation-next">`;
-    nextPrecipitation.forEach(hour => {
-      const timeDisplay = hour.time.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        hour12: true
-      }).replace(' AM', 'AM').replace(' PM', 'PM');
-
-      precipitationHTML += `
-        <div class="precip-hour">
-          <div class="precip-hour-time">${timeDisplay}</div>
-          <div class="precip-hour-bar-container">
-            <div class="precip-hour-bar">
-              <div class="precip-hour-bar-fill" style="width: ${Math.min(hour.chance, 100)}%"></div>
-            </div>
-          </div>
-          <div class="precip-hour-info">
-            <div class="precip-hour-chance">${hour.chance}%</div>
-            <div class="precip-hour-amount">${hour.precip}mm</div>
-          </div>
-        </div>
-      `;
-    });
-    precipitationHTML += `</div>`;
+  calculateSum(hourlyData) {
+    if (!hourlyData || hourlyData.length === 0) return 0;
+    let total = 0;
+    hourlyData.forEach(hour => { total += hour.precip_mm ?? 0; });
+    return Math.round(total * 10) / 10;
   }
 
-  pContainer.innerHTML = precipitationHTML;
-}
+  displayHourlyForecast(allHourlyData, localTime) {
+    const container = document.getElementById('hourlyForecast');
+    if (!container) return;
+    container.innerHTML = '';
 
-calculateSum(hourlyData) {
-  if (!hourlyData || hourlyData.length === 0) return 0;
-  
-  let total = 0;
-  hourlyData.forEach(hour => {
-    total += hour.precip_mm ?? 0;
-  });
-  
-  return Math.round(total * 10) / 10; 
-}
+    // FIX: Use Date timestamp for accurate future hour comparison
+    const currentTimeMs = new Date(localTime.replace(/-/g, '/')).getTime();
 
+    const nextHours = allHourlyData
+      .filter(h => {
+        const hourTimeMs = new Date(h.time.replace(/-/g, '/')).getTime();
+        // Filter to include the current hour and all future hours
+        return hourTimeMs >= currentTimeMs;
+      })
+      .slice(0, 5);
 
-  displayHourlyForecast(hourlyData, localTime) {
-    const hourlyContainer = document.getElementById('hourlyForecast');
-    if (!hourlyContainer) {
-      console.error('Hourly container not found!');
-      return;
-    }
+    nextHours.forEach((hour, index) => {
+      const hourNum = parseInt(hour.time.split(' ')[1].split(':')[0]);
+      const display = index === 0 ? 'Now' : `${hourNum % 12 === 0 ? 12 : hourNum % 12}${hourNum >= 12 ? 'PM' : 'AM'}`;
 
-    hourlyContainer.innerHTML = '';
-    
-    const now = new Date(localTime);
-    const currentHour = now.getHours();
-
-    const currentHourIndex = hourlyData.findIndex(hour => {
-      const hourTime = new Date(hour.time);
-      return hourTime.getHours() === currentHour;
-    });
-
-    if (currentHourIndex === -1) {
-      hourlyContainer.innerHTML = '<div class="no-hourly-data">No hourly data available</div>';
-      return;
-    }
-
-    const next5Hours = hourlyData.slice(currentHourIndex, currentHourIndex + 5);
-
-    if (next5Hours.length === 0) {
-      hourlyContainer.innerHTML = '<div class="no-hourly-data">No hourly data available</div>';
-      return;
-    }
-
-    next5Hours.forEach((hour, index) => {
-      const hourTime = new Date(hour.time);
-      const hourItem = document.createElement('div');
-      hourItem.className = 'hourly-item';
-      
-      let timeDisplay;
-      if (index === 0) {
-        timeDisplay = 'Now';
-      } 
-      
-      else {
-        timeDisplay = hourTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          hour12: true
-        }).replace(' AM', 'AM').replace(' PM', 'PM');
-      }
-      
-      hourItem.innerHTML = `
-        <div class="hourly-time">${timeDisplay}</div>
-        <img src="https:${hour.condition.icon}" alt="${hour.condition.text}" class="hourly-icon">
+      const item = document.createElement('div');
+      item.className = 'hourly-item';
+      item.innerHTML = `
+        <div class="hourly-time">${display}</div>
+        <img src="https:${hour.condition.icon}" class="hourly-icon" alt="${hour.condition.text}">
         <div class="hourly-temp">${Math.round(hour.temp_c)}°</div>
       `;
-      
-      hourlyContainer.appendChild(hourItem);
+      container.appendChild(item);
     });
   }
 
   displayForecast(forecastDays) {
     const forecastContainer = document.getElementById('forecastDays');
+    if (!forecastContainer) return;
     forecastContainer.innerHTML = '';
-
+    if (!forecastDays || !forecastDays.forEach) return;
     forecastDays.forEach(day => {
       const date = new Date(day.date);
       const forecastDay = document.createElement('div');
       forecastDay.className = 'forecast-day';
-      
-      forecastDay.innerHTML = `
-        <div class="day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-        <img src="https:${day.day.condition.icon}" alt="${day.day.condition.text}">
-        <div class="forecast-temp">${Math.round(day.day.maxtemp_c)}° / ${Math.round(day.day.mintemp_c)}°</div>
-        <div class="condition">${day.day.condition.text}</div>
-      `;
-      
+      forecastDay.innerHTML = `<div class="day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div><img src="https:${day.day.condition.icon}" alt="${day.day.condition.text}"><div class="forecast-temp">${Math.round(day.day.maxtemp_c)}° / ${Math.round(day.day.mintemp_c)}°</div><div class="condition">${day.day.condition.text}</div>`;
       forecastContainer.appendChild(forecastDay);
     });
   }
 
-  updateBackground(localTime) {
-    const hour = new Date(localTime).getHours();
+  updateBackground(hour) {
     const body = document.body;
-    
     body.classList.remove('background-morning', 'background-day', 'background-afternoon', 'background-evening', 'background-night');
-    
-    if (hour >= 6 && hour < 12) {
-      body.classList.add('background-morning');
-    } 
-    
-    else if (hour >= 12 && hour < 15) {
-      body.classList.add('background-day');
-    } 
-    
-    else if (hour >= 15 && hour < 18) {
-      body.classList.add('background-afternoon');
-    } 
-    
-    else if (hour >= 18 && hour < 21) {
-      body.classList.add('background-evening');
-    } 
-    
-    else {
-      body.classList.add('background-night');
-    }
+    if (hour >= 6 && hour < 12) body.classList.add('background-morning');
+    else if (hour >= 12 && hour < 15) body.classList.add('background-day');
+    else if (hour >= 15 && hour < 18) body.classList.add('background-afternoon');
+    else if (hour >= 18 && hour < 21) body.classList.add('background-evening');
+    else body.classList.add('background-night');
   }
 
-  showLoading() { document.getElementById('loading').classList.remove('hidden'); }
-  hideLoading() { document.getElementById('loading').classList.add('hidden'); }
-  showWeatherData() { document.getElementById('weatherData').classList.remove('hidden'); }
-  hideWeatherData() { document.getElementById('weatherData').classList.add('hidden'); }
-  showError(msg) { const e = document.getElementById('error'); e.textContent = msg; e.classList.remove('hidden'); }
-  hideError() { document.getElementById('error').classList.add('hidden'); }
+  showLoading() { const el = document.getElementById('loading'); if (el) el.classList.remove('hidden'); }
+  hideLoading() { const el = document.getElementById('loading'); if (el) el.classList.add('hidden'); }
+  showWeatherData() { const el = document.getElementById('weatherData'); if (el) el.classList.remove('hidden'); }
+  hideWeatherData() { const el = document.getElementById('weatherData'); if (el) el.classList.add('hidden'); }
+  showError(msg) { const e = document.getElementById('error'); if (e) { e.textContent = msg; e.classList.remove('hidden'); } }
+  hideError() { const e = document.getElementById('error'); if (e) e.classList.add('hidden'); }
 }
 
 document.addEventListener('DOMContentLoaded', () => new WeatherExtension());

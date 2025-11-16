@@ -235,11 +235,10 @@ body {
 .location-header h2 {
   margin: 0;
   flex: 1;
-  text-align: center;
-  margin-left: 30px;
+  text-align: left;
+  margin-left: 0; 
 }
 
-/* Improved pinned item color schemes */
 .pinned-morning {
   background: linear-gradient(135deg, rgba(109, 213, 237, 0.5) 0%, rgba(33, 147, 176, 0.5) 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.6) !important;
@@ -610,11 +609,11 @@ body {
 }
 
 .background-morning {
-  background: linear-gradient(135deg, #667eea 0%, #2b2b95 100%);
+  background: linear-gradient(135deg, #667eea 0%, #4949d7 100%);
 }
 
 .background-day {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #3d86c6 0%, #12c3cd 100%);
 }
 
 .background-afternoon {
@@ -707,9 +706,9 @@ body.background-night #citySearch {
 .precipitation-next {
   display: flex;
   justify-content: center; 
-  gap: 10px;              
-  padding: 0;            
-  margin-top: 0;         
+  gap: 10px;          
+  padding: 0;           
+  margin-top: 0;          
   background: none;       
 }
 
@@ -759,10 +758,10 @@ body.background-night #citySearch {
 }
 
 .precipitation-title {
-  font-size: 18px;           
+  font-size: 18px;            
   font-weight: 700;
   color: white;             
-  text-align: center;      
+  text-align: center;       
   margin: 12px 0;           
   text-shadow: 1px 1px 4px rgba(0,0,0,0.3); 
   letter-spacing: 0.5px;
@@ -802,9 +801,9 @@ body.background-night #citySearch {
   align-items: center;
   justify-content: center;
   width: 100%;          
-  max-width: 360px;     
-  margin: 8px auto;    
-  padding: 6px 0;        
+  max-width: 360px;   
+  margin: 8px auto;   
+  padding: 6px 0;         
   background: rgba(59, 130, 246, 0.15); 
   border-radius: 10px;
   backdrop-filter: blur(6px);
@@ -823,7 +822,7 @@ body.background-night #citySearch {
 .total-precip-section::after {
   content: '';
   display: block;
-  width: 60px;          
+  width: 60px;            
   height: 3px;
   background: linear-gradient(90deg, #3b82f6, #60a5fa);
   border-radius: 2px;
@@ -949,4 +948,42 @@ body.background-night #citySearch {
 .pin-city-button.pinned:hover {
   background: rgba(255, 215, 0, 0.4);
   border-color: rgba(255, 215, 0, 0.9);
+}
+
+#pinButton.pin-button {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.15); 
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%; 
+  color: rgba(255, 255, 255, 0.8); 
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#pinButton.pin-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: white; 
+  transform: scale(1.05);
+}
+
+#pinButton.pin-button.pinned {
+  background: rgba(255, 215, 0, 0.3); 
+  border-color: rgba(255, 215, 0, 0.7);
+  color: #ffd700; 
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#pinButton.pin-button.pinned:hover {
+  background: rgba(255, 215, 0, 0.4);
+  color: #ffc400;
+  transform: scale(1.05);
 }
