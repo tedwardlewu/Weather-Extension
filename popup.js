@@ -28,13 +28,18 @@ class WeatherExtension {
       if (searchEl) searchEl.value = this.currentCity;
 
       if (pinArray.length > 0) {
+
         if (typeof pinArray[0] === 'string') {
           this.pinnedCities = pinArray.map(city => ({ name: city, localTime: '00:00' }));
           this.savePinnedCities();
-        } else {
+        }
+        
+        else {
           this.pinnedCities = pinArray;
         }
-      } else {
+      } 
+      
+      else {
         this.pinnedCities = [];
       }
 
@@ -128,17 +133,19 @@ class WeatherExtension {
 
         pinnedList.appendChild(item);
       });
-    } else {
+    } 
+    
+    else {
       pinnedContainer.classList.add('hidden');
     }
   }
 
   getHourFromLocalTime(localTime) {
-    // API returns "YYYY-MM-DD HH:MM"
+    
     try {
       return parseInt(localTime.split(' ')[1].split(':')[0]);
     } catch {
-      return 12; // default noon if parsing fails
+      return 12; 
     }
   }
 
@@ -243,14 +250,13 @@ class WeatherExtension {
       }
       const data = await res.json();
       
-      // FIX: Combine hourly data from day 1 and day 2 to ensure we have future hours
       const hourlyDay1 = (data.forecast && data.forecast.forecastday && data.forecast.forecastday[0] && data.forecast.forecastday[0].hour) || [];
       const hourlyDay2 = (data.forecast && data.forecast.forecastday && data.forecast.forecastday[1] && data.forecast.forecastday[1].hour) || [];
       const allHourlyData = [...hourlyDay1, ...hourlyDay2];
 
       this.displayWeatherData(data, allHourlyData);
 
-      // use API time directly
+    
       const cityHour = this.getHourFromLocalTime(data.location.localtime);
       this.updateBackground(cityHour);
 
@@ -312,7 +318,6 @@ class WeatherExtension {
     const totalPrecipContainer = document.getElementById('totalPrecipitation');
     if (!pContainer || !totalPrecipContainer) return;
 
-    // Sum for the next 24 hours (first 24 entries in combined data)
     const totalPrecip = this.calculateSum(allHourlyData.slice(0, 24)); 
     totalPrecipContainer.textContent = `${totalPrecip} mm`;
 
@@ -321,13 +326,12 @@ class WeatherExtension {
 
     let nextPrecipitation = [];
     if (allHourlyData.length > 0) {
-      // FIX: Use Date timestamp for accurate future hour comparison
+    
       const currentTimeMs = new Date(localTime.replace(/-/g, '/')).getTime(); 
 
       nextPrecipitation = allHourlyData
         .filter(h => {
           const hourTimeMs = new Date(h.time.replace(/-/g, '/')).getTime();
-          // Filter to include the current hour and all future hours
           return hourTimeMs >= currentTimeMs;
         })
         .slice(0, 5)
@@ -366,13 +370,13 @@ class WeatherExtension {
     if (!container) return;
     container.innerHTML = '';
 
-    // FIX: Use Date timestamp for accurate future hour comparison
+  
     const currentTimeMs = new Date(localTime.replace(/-/g, '/')).getTime();
 
     const nextHours = allHourlyData
       .filter(h => {
         const hourTimeMs = new Date(h.time.replace(/-/g, '/')).getTime();
-        // Filter to include the current hour and all future hours
+ 
         return hourTimeMs >= currentTimeMs;
       })
       .slice(0, 5);
