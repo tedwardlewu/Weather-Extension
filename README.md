@@ -10,3 +10,5 @@ Key Features:
 - Forecast Functionality: Provides short-term and weekly forecasts for selected locations.
 
 *Integration with external weather API
+
+*Ran on Render
