@@ -15,12 +15,13 @@ app.get('/weather', async (req, res) => {
     const response = await fetch(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(q)}&days=${days || 3}&aqi=no&alerts=no`);
     const data = await response.json();
     res.json(data);
-  } 
+  }
   
   catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 app.get('/search', async (req, res) => {
   const { q } = req.query;
@@ -38,6 +39,7 @@ app.get('/search', async (req, res) => {
 });
 
 app.get('/healthz', (req, res) => {
+  console.log('Healthcheck ping received');  // optional for debugging
   res.status(200).send('OK');
 });
 
