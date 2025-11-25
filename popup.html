@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="popup.css">
-  <title>Weather Forecast</title>
+  <title>Weather 4cast</title>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Weather Forecast</h1>
+      <h1>Weather 4cast</h1>
       <div class="city-selector">
         <div class="search-input-wrapper">
           <input type="text" id="citySearch" placeholder="Search for a city..." autocomplete="off">
@@ -25,7 +25,7 @@
       </div>
     </div>
     
-    <div id="loading" class="loading">Loading weather data...</div>
+    <div id="loader" class="loading">Loading weather data...</div>
     
     <div id="weatherData" class="weather-data hidden">
       <div class="current-weather">
@@ -43,27 +43,19 @@
           </div>
         </div>
       </div>
-      
       <div class="condition-text" id="conditionText"></div>
-
-      <!-- Total Precipitation Section -->
       <div class="total-precip-section">
         <h3 class="precipitation-title">Total Precipitation Today</h3>
         <div id="totalPrecipitation" class="total-precip-value">0 mm</div>
       </div>
-
-      <!-- Precipitation Section -->
       <div class="precipitation-section">
         <h3 class="precipitation-title">Precipitation</h3>
         <div id="precipitation" class="precipitation-data"></div>
       </div>
-
-      <!-- 5-Hour Horizontal Forecast -->
       <div class="hourly-forecast">
         <h3>Next 5 Hours</h3>
         <div id="hourlyForecast" class="hourly-container"></div>
       </div>
-      
       <div class="weather-details">
         <div class="detail-row">
           <div class="detail-item">
@@ -96,7 +88,6 @@
           </div>
         </div>
       </div>
-      
       <div class="forecast">
         <h3>3-Day Forecast</h3>
         <div id="forecastDays" class="forecast-days"></div>
@@ -105,7 +96,6 @@
     
     <div id="error" class="error hidden"></div>
   </div>
-  
   <script src="popup.js"></script>
 </body>
 </html>

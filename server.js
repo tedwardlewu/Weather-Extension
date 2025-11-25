@@ -8,6 +8,8 @@ app.use(cors());
 const API_KEY = 'da9393ec436a49ef8b332007251611';
 const BASE_URL = 'https://api.weatherapi.com/v1';
 
+const PORT = process.env.PORT || 3000; 
+
 app.get('/weather', async (req, res) => {
   const { q, days } = req.query;
   try {
@@ -19,4 +21,18 @@ app.get('/weather', async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log('Server running on http://localhost:3000'));
+// MAKE SURE THIS SEARCH ENDPOINT EXISTS
+app.get('/search', async (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.status(400).json({ error: 'Query missing' });
+
+  try {
+    const response = await fetch(`${BASE_URL}/search.json?key=${API_KEY}&q=${encodeURIComponent(q)}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
