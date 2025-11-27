@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="popup.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <title>Weather 4cast</title>
 </head>
 <body>
@@ -24,76 +25,112 @@
         <div class="pinned-list" id="pinnedList"></div>
       </div>
     </div>
-    
+
     <div id="loader" class="loading">Loading weather data...</div>
-    
-    <div id="weatherData" class="weather-data hidden">
+
+    <div id="weatherData" class="weather-data">
+      <div id="weatherWarning" class="weather-warning hidden">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-text">Weather Warning</div>
+      </div>
+
       <div class="current-weather">
         <div class="location">
           <div class="location-header">
-            <h2 id="locationName"></h2>
+            <h2 id="locationName">--</h2>
             <button id="pinButton" class="pin-button">📌</button>
           </div>
-          <p id="currentDate"></p>
+          <p id="localTime" class="local-time">--:--</p>
+          <p id="currentDate">--</p>
         </div>
         <div class="temperature-section">
-          <span id="currentTemp" class="temp-main"></span>
+          <span id="currentTemp" class="temp-main">--°C</span>
           <div class="weather-icon">
             <img id="weatherIcon" src="" alt="Weather Icon">
           </div>
         </div>
       </div>
-      <div class="condition-text" id="conditionText"></div>
-      <div class="total-precip-section">
-        <h3 class="precipitation-title">Total Precipitation Today</h3>
-        <div id="totalPrecipitation" class="total-precip-value">0 mm</div>
+
+      <div class="condition-text" id="conditionText">--</div>
+
+      <div class="sun-times">
+        <div class="sun-time-item">
+          <span class="icon">🌅</span>
+          <div class="time-info">
+            <span class="label">Sunrise</span>
+            <span class="value" id="sunrise">--:--</span>
+          </div>
+        </div>
+        <div class="sun-time-item">
+          <span class="icon">🌇</span>
+          <div class="time-info">
+            <span class="label">Sunset</span>
+            <span class="value" id="sunset">--:--</span>
+          </div>
+        </div>
       </div>
+
+      <div class="total-precip-section">
+        <h3 class="section-title">Precipitation next 24h</h3>
+        <div id="totalPrecipitation" class="total-precip-value">-- mm</div>
+      </div>
+
       <div class="precipitation-section">
-        <h3 class="precipitation-title">Precipitation</h3>
+        <h3 class="section-title">Precipitation</h3>
         <div id="precipitation" class="precipitation-data"></div>
       </div>
+
       <div class="hourly-forecast">
-        <h3>Next 5 Hours</h3>
+        <h3 class="section-title">Next 5 Hours</h3>
         <div id="hourlyForecast" class="hourly-container"></div>
       </div>
+
       <div class="weather-details">
         <div class="detail-row">
           <div class="detail-item">
             <span class="label">Feels Like</span>
-            <span id="feelsLike" class="value"></span>
+            <span id="feelsLike" class="value">--°C</span>
           </div>
           <div class="detail-item">
             <span class="label">Humidity</span>
-            <span id="humidity" class="value"></span>
+            <span id="humidity" class="value">--%</span>
           </div>
         </div>
         <div class="detail-row">
           <div class="detail-item">
             <span class="label">Wind</span>
-            <span id="wind" class="value"></span>
+            <span id="wind" class="value">-- km/h</span>
           </div>
           <div class="detail-item">
             <span class="label">Pressure</span>
-            <span id="pressure" class="value"></span>
+            <span id="pressure" class="value">-- mb</span>
           </div>
         </div>
         <div class="detail-row">
           <div class="detail-item">
             <span class="label">Visibility</span>
-            <span id="visibility" class="value"></span>
+            <span id="visibility" class="value">-- km</span>
           </div>
           <div class="detail-item">
             <span class="label">UV Index</span>
-            <span id="uv" class="value"></span>
+            <span id="uv" class="value">--</span>
           </div>
         </div>
       </div>
+
+      <div class="temperature-graph-section">
+        <h3 class="section-title">12-Hour Temperature</h3>
+        <div id="temperatureGraph" class="temperature-graph">
+          <canvas id="tempChart"></canvas>
+        </div>
+      </div>
+
       <div class="forecast">
-        <h3>3-Day Forecast</h3>
-        <div id="forecastDays" class="forecast-days"></div>
+        <h3 class="section-title">3-Day Forecast</h3>
+        <div id="forecastDays" class="forecast-days-container"></div>
       </div>
     </div>
-    
+
     <div id="error" class="error hidden"></div>
   </div>
   <script src="popup.js"></script>
