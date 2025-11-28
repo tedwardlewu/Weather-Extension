@@ -5,6 +5,7 @@ class WeatherExtension {
         this.searchTimeout = null;
         this.API_BASE = 'https://weather-extension-1.onrender.com';
         this.tempChart = null;
+        this.loadingProgress = 0;
         this.init();
     }
 
@@ -13,8 +14,63 @@ class WeatherExtension {
         this.loadSavedCity().catch(err => console.error('Init error:', err));
         this.bindEvents();
         this.bindPinButton();
+        this.bindRefreshButton();
         this.hideLoading();
         this.loadSavedWeatherData();
+    }
+
+    bindRefreshButton() {
+        const refreshBtn = document.getElementById('refreshButton');
+        if (!refreshBtn) return;
+        refreshBtn.addEventListener('click', () => {
+            if (this.currentCity) {
+                this.showLoadingProgress();
+                this.fetchWeatherData();
+            }
+        });
+    }
+
+    showLoadingProgress() {
+        const progressEl = document.getElementById('loadingProgress');
+        const fillEl = document.getElementById('progressFill');
+        const textEl = document.getElementById('progressText');
+        
+        if (!progressEl || !fillEl || !textEl) return;
+        
+        progressEl.classList.remove('hidden');
+        this.loadingProgress = 0;
+        
+        const interval = setInterval(() => {
+            this.loadingProgress += Math.random() * 15;
+            if (this.loadingProgress >= 90) {
+                this.loadingProgress = 90;
+            }
+            fillEl.style.width = `${this.loadingProgress}%`;
+            textEl.textContent = `Loading... ${Math.round(this.loadingProgress)}%`;
+        }, 200);
+        
+        this.loadingInterval = interval;
+    }
+
+    hideLoadingProgress() {
+        const progressEl = document.getElementById('loadingProgress');
+        const fillEl = document.getElementById('progressFill');
+        const textEl = document.getElementById('progressText');
+        
+        if (this.loadingInterval) {
+            clearInterval(this.loadingInterval);
+        }
+        
+        if (fillEl && textEl) {
+            fillEl.style.width = '100%';
+            textEl.textContent = 'Loading... 100%';
+            
+            setTimeout(() => {
+                if (progressEl) progressEl.classList.add('hidden');
+                if (fillEl) fillEl.style.width = '0%';
+                if (textEl) textEl.textContent = 'Loading... 0%';
+            }, 300);
+        }
     }
 
     async loadSavedCity() {
@@ -53,81 +109,6 @@ class WeatherExtension {
         setText('sunset', '--:--');
 
         this.updateBackground(new Date().getHours());
-        
-        const hourlyContainer = document.getElementById('hourlyForecast');
-        if (hourlyContainer) {
-            hourlyContainer.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
-                const div = document.createElement('div');
-                div.className = 'hourly-item';
-                div.innerHTML = `
-                    <div class="hourly-time">${i === 0 ? 'Now' : '--:--'}</div>
-                    <div class="hourly-icon">🌤️</div>
-                    <div class="hourly-temp">--°</div>
-                `;
-                hourlyContainer.appendChild(div);
-            }
-        }
-
-        const forecastContainer = document.getElementById('forecastDays');
-        if (forecastContainer) {
-            forecastContainer.innerHTML = '';
-            for (let i = 0; i < 3; i++) {
-                const date = new Date();
-                date.setDate(date.getDate() + i);
-                const div = document.createElement('div');
-                div.className = 'forecast-day';
-                div.innerHTML = `
-                    <div class="forecast-day-header">
-                        <div class="forecast-day-left">
-                            <div class="day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                            <div>🌤️</div>
-                        </div>
-                        <div class="forecast-day-right">
-                            <div class="forecast-temp">--° / --°</div>
-                            <div class="condition">Loading...</div>
-                        </div>
-                    </div>
-                    <div class="forecast-day-details collapsed"></div>
-                `;
-                forecastContainer.appendChild(div);
-            }
-        }
-
-        const precipContainer = document.getElementById('precipitation');
-        if (precipContainer) {
-            precipContainer.innerHTML = `
-                <div class="precipitation-current">
-                    <div class="precip-label">Precipitation</div>
-                    <div class="precip-bar-container">
-                        <div class="precip-bar"><div class="precip-bar-fill" style="width: 0%"></div></div>
-                        <div class="precip-value">--mm</div>
-                    </div>
-                    <div class="precip-chance">--% chance</div>
-                </div>
-                <div class="precipitation-next">
-                    ${Array(5).fill().map((_, i) => `
-                        <div class="precip-hour">
-                            <div class="precip-hour-time">${i === 0 ? 'Now' : '--'}</div>
-                            <div class="precip-hour-bar-container">
-                                <div class="precip-hour-bar">
-                                    <div class="precip-hour-bar-fill" style="width:0%"></div>
-                                </div>
-                            </div>
-                            <div class="precip-hour-info">
-                                <div class="precip-hour-chance">--%</div>
-                                <div class="precip-hour-amount">--mm</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        const graphContainer = document.getElementById('temperatureGraph');
-        if (graphContainer) {
-            graphContainer.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 0;">Loading temperature graph...</div>';
-        }
     }
 
     savePinnedCities() {
@@ -135,7 +116,6 @@ class WeatherExtension {
     }
 
     async togglePinCity(city) {
-
         const idx = this.pinnedCities.findIndex(pin => pin.name === city);
         if (idx > -1) {
             this.pinnedCities.splice(idx, 1);
@@ -151,9 +131,7 @@ class WeatherExtension {
                 localTime: data.location.localtime,
                 timezone: data.location.tz_id 
             });
-        } 
-        
-        catch {
+        } catch {
             this.pinnedCities.push({ 
                 name: city, 
                 localTime: '00:00',
@@ -171,13 +149,13 @@ class WeatherExtension {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.error?.message || `HTTP ${res.status}`);
         }
-
         return res.json();
     }
 
     async fetchWeatherData() {
         this.hideError();
         this.showWeatherData();
+        this.showLoadingProgress();
 
         try {
             const data = await this.fetchCity(this.currentCity);
@@ -201,15 +179,12 @@ class WeatherExtension {
             });
             this.updatePinnedCities();
             this.updatePinButton();
-        } 
-        
-        catch (err) {
+        } catch (err) {
             console.error('Weather fetch error:', err);
             this.showError(`Failed to fetch weather: ${err.message}`);
-        } 
-        
-        finally {
+        } finally {
             this.hideLoading();
+            this.hideLoadingProgress();
         }
     }
 
@@ -228,9 +203,7 @@ class WeatherExtension {
                 document.getElementById('visibility').textContent = `${data.current.vis_km} km`;
                 document.getElementById('uv').textContent = data.current.uv;
                 document.getElementById('weatherIcon').src = `https:${data.current.condition.icon}`;
-                
                 document.getElementById('locationName').textContent = `${data.location.name}, ${data.location.country}`;
-                
                 this.updateLocalTime(data.location.tz_id);
             }
         });
@@ -262,9 +235,7 @@ class WeatherExtension {
             const formattedDate = dateFormatter.format(now);
             document.getElementById('currentDate').textContent = formattedDate;
             
-        } 
-        
-        catch (error) {
+        } catch (error) {
             console.error('Error updating local time:', error);
             const now = new Date();
             const formattedTime = now.toLocaleTimeString('en-US', { 
@@ -285,6 +256,24 @@ class WeatherExtension {
         const pinned = this.pinnedCities.some(pin => pin.name === this.currentCity);
         btn.textContent = pinned ? '❌' : '📌';
         btn.classList.toggle('pinned', pinned);
+        
+        // Remove all time-based classes first
+        btn.classList.remove('pin-morning', 'pin-day', 'pin-afternoon', 'pin-evening', 'pin-night');
+        
+        // Add the current time-based class if pinned
+        if (pinned) {
+            const hour = new Date().getHours();
+            const timeClass = this.getTimePeriodClass(hour);
+            btn.classList.add(timeClass.replace('pinned-', 'pin-'));
+        }
+    }
+
+    getTimePeriodClass(hour) {
+        if (hour >= 6 && hour < 12) return 'pinned-morning';
+        if (hour >= 12 && hour < 15) return 'pinned-day';
+        if (hour >= 15 && hour < 18) return 'pinned-afternoon';
+        if (hour >= 18 && hour < 21) return 'pinned-evening';
+        return 'pinned-night';
     }
 
     bindPinButton() {
@@ -307,7 +296,8 @@ class WeatherExtension {
         container.classList.remove('hidden');
         this.pinnedCities.forEach(pin => {
             const item = document.createElement('div');
-            item.className = `pinned-item ${this.getTimePeriodClassFromHour(this.getHourFromLocalTime(pin.localTime))}`;
+            const hour = this.getHourFromLocalTime(pin.localTime);
+            item.className = `pinned-item ${this.getTimePeriodClass(hour)}`;
             
             const nameSpan = document.createElement('span');
             nameSpan.textContent = pin.name;
@@ -338,43 +328,12 @@ class WeatherExtension {
         });
     }
 
-    getCurrentTimeForTimezone(timezone) {
-        try {
-            if (!timezone) return '';
-            
-            const now = new Date();
-            const formatter = new Intl.DateTimeFormat('en-US', {
-                timeZone: timezone,
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
-            
-            return formatter.format(now);
-        } 
-        
-        catch (error) {
-            console.error('Error getting time for timezone:', timezone, error);
-            return '';
-        }
-    }
-
     getHourFromLocalTime(localTime) {
         try {
             return parseInt(localTime.split(' ')[1].split(':')[0]);
-        } 
-        
-        catch {
+        } catch {
             return 12;
         }
-    }
-
-    getTimePeriodClassFromHour(hour) {
-        if (hour >= 6 && hour < 12) return 'pinned-morning';
-        if (hour >= 12 && hour < 15) return 'pinned-day';
-        if (hour >= 15 && hour < 18) return 'pinned-afternoon';
-        if (hour >= 18 && hour < 21) return 'pinned-evening';
-        return 'pinned-night';
     }
 
     bindEvents() {
@@ -414,36 +373,25 @@ class WeatherExtension {
         const active = results.querySelector('.active');
         let next;
         if (e.key === 'ArrowDown') {
-
             e.preventDefault();
             if (!active) {
                 next = items[0];
-            } 
-            
-            else {
+            } else {
                 next = active.nextElementSibling || items[0];
             }
             active?.classList.remove('active');
             next?.classList.add('active');
-        } 
-        
-        else if (e.key === 'ArrowUp') {
+        } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (!active) {
                 next = items[items.length - 1];
-            } 
-            
-            else {
+            } else {
                 next = active.previousElementSibling || items[items.length - 1];
             }
-
             active?.classList.remove('active');
             next?.classList.add('active');
-        } 
-        
-        else if (e.key === 'Enter') {
+        } else if (e.key === 'Enter') {
             e.preventDefault();
-
             if (active) {
                 this.currentCity = active.dataset.cityName;
                 document.getElementById('citySearch').value = this.currentCity;
@@ -451,9 +399,7 @@ class WeatherExtension {
                 this.showPlaceholderData();
                 this.fetchWeatherData();
                 document.getElementById('citySearch')?.blur();
-            } 
-            
-            else {
+            } else {
                 this.currentCity = document.getElementById('citySearch')?.value.trim();
                 if (this.currentCity) {
                     this.hideSearchResults();
@@ -491,13 +437,10 @@ class WeatherExtension {
             });
             this.displaySearchResults(enhancedResults);
         } catch (error) {
-            console.error('Direct API call failed:', error);
-            this.useMockSearchData(query);
+            console.error('Search failed:', error);
         }
     }
-
     
-
     displaySearchResults(cities) {
         const resultsContainer = document.getElementById('searchResults');
         if (!resultsContainer) return;
@@ -512,9 +455,11 @@ class WeatherExtension {
             cities.forEach(city => {
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
+
                 if (city.isPinned) {
                     item.classList.add('pinned-result');
                 }
+
                 let displayText = city.name;
                 if (city.region && city.country) {
                     displayText += `, ${city.region}, ${city.country}`;
@@ -610,9 +555,7 @@ class WeatherExtension {
         };
         
         setText('locationName', `${data.location.name}, ${data.location.country}`);
-        
         this.updateLocalTime(data.location.tz_id);
-        
         setText('currentTemp', `${Math.round(data.current.temp_c)}°C`);
         setText('conditionText', data.current.condition.text);
         setIcon('weatherIcon', data.current.condition.icon, data.current.condition.text);
@@ -634,6 +577,7 @@ class WeatherExtension {
         this.displayForecast(data.forecast.forecastday);
         this.displayHourlyForecast(hourlyData, data.location.localtime);
         this.displayTemperatureGraph(hourlyData, data.location.localtime);
+        this.displayWeatherMap(data.location);
         
         const hour = this.getHourFromLocalTime(data.location.localtime);
         this.updateBackground(hour);
@@ -641,7 +585,6 @@ class WeatherExtension {
 
     checkWeatherAlerts(data) {
         const warningElement = document.getElementById('weatherWarning');
-        
         const severeConditions = [
             'thunder', 'storm', 'tornado', 'hurricane', 'cyclone', 
             'blizzard', 'snow', 'ice', 'freezing', 'fog', 'hail'
@@ -654,15 +597,7 @@ class WeatherExtension {
         
         let hasWarning = false;
         
-        if (windSpeed > 50) {
-            hasWarning = true;
-        }
-        
-        if (visibility < 2) {
-            hasWarning = true;
-        }
-        
-        if (uvIndex > 8) {
+        if (windSpeed > 50 || visibility < 2 || uvIndex > 8) {
             hasWarning = true;
         }
         
@@ -689,8 +624,6 @@ class WeatherExtension {
         if (!container || !totalEl) return;
         const totalPrecip = Math.round(hourlyData.reduce((sum, h) => sum + (h.precip_mm ?? 0), 0) * 10) / 10;
         totalEl.textContent = `${totalPrecip} mm`;
-        const currentPrecip = current.precip_mm ?? 0;
-        const currentChance = current.chance_of_rain ?? current.chance_of_snow ?? 0;
         const currentTimeMs = new Date(localTime.replace(/-/g, '/')).getTime();
         const nextHours = hourlyData
             .filter(h => new Date(h.time.replace(/-/g, '/')).getTime() >= currentTimeMs)
@@ -700,34 +633,25 @@ class WeatherExtension {
                 chance: h.chance_of_rain ?? h.chance_of_snow ?? 0,
                 precip: h.precip_mm ?? 0
             }));
-        let html = `<div class="precipitation-current">
-            <div class="precip-label">Precipitation</div>
-            <div class="precip-bar-container">
-                <div class="precip-bar"><div class="precip-bar-fill" style="width: ${Math.min(currentChance, 100)}%"></div></div>
-                <div class="precip-value">${currentPrecip}mm</div>
-            </div>
-            <div class="precip-chance">${currentChance}% chance</div>
-        </div>`;
-        if (nextHours.length > 0) {
-            html += `<div class="precipitation-next">`;
-            nextHours.forEach(h => {
-                const hourNum = parseInt(h.time.split(' ')[1].split(':')[0]);
-                const display = `${hourNum % 12 === 0 ? 12 : hourNum % 12}${hourNum >= 12 ? 'PM' : 'AM'}`;
-                html += `<div class="precip-hour">
-                    <div class="precip-hour-time">${display}</div>
-                    <div class="precip-hour-bar-container">
-                        <div class="precip-hour-bar">
-                            <div class="precip-hour-bar-fill" style="width:${Math.min(h.chance, 100)}%"></div>
-                        </div>
+
+        let html = `<div class="precipitation-next">`;
+        nextHours.forEach(h => {
+            const hourNum = parseInt(h.time.split(' ')[1].split(':')[0]);
+            const display = `${hourNum % 12 === 0 ? 12 : hourNum % 12}${hourNum >= 12 ? 'PM' : 'AM'}`;
+            html += `<div class="precip-hour">
+                <div class="precip-hour-time">${display}</div>
+                <div class="precip-hour-bar-container">
+                    <div class="precip-hour-bar">
+                        <div class="precip-hour-bar-fill" style="width:${Math.min(h.chance, 100)}%"></div>
                     </div>
-                    <div class="precip-hour-info">
-                        <div class="precip-hour-chance">${h.chance}%</div>
-                        <div class="precip-hour-amount">${h.precip}mm</div>
-                    </div>
-                </div>`;
-            });
-            html += `</div>`;
-        }
+                </div>
+                <div class="precip-hour-info">
+                    <div class="precip-hour-chance">${h.chance}%</div>
+                    <div class="precip-hour-amount">${h.precip}mm</div>
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
         container.innerHTML = html;
     }
 
@@ -741,8 +665,7 @@ class WeatherExtension {
                 const hourNum = parseInt(h.time.split(' ')[1].split(':')[0]);
                 const display = i === 0 ? 'Now' : `${hourNum % 12 === 0 ? 12 : hourNum % 12}${hourNum >= 12 ? 'PM' : 'AM'}`;
                 
-                let conditionText = h.condition.text;
-                conditionText = conditionText
+                let conditionText = h.condition.text
                     .replace('Partly cloudy', 'Partly Cloudy')
                     .replace('Light rain shower', 'Rain Shower')
                     .replace('Moderate rain', 'Rain')
@@ -750,7 +673,14 @@ class WeatherExtension {
                     .replace('Patchy rain', 'Rain')
                     .replace('Light drizzle', 'Drizzle')
                     .replace('Thundery outbreaks', 'Storm')
+                    .replace('Patchy moderate snow', 'Moderate Snow')
+                    .replace('Moderate snow', 'Moderate Snow')
+                    .replace('Patchy heavy snow', 'Heavy Snow')
+                    .replace('Patchy light snow', 'Light Snow')
+                    .replace('Light freezing rain', 'Freezing Rain')
+                    .replace('Light snow', 'Light Snow')
                     .replace('Thunderstorm', 'Storm');
+                    
                 
                 const div = document.createElement('div');
                 div.className = 'hourly-item';
@@ -778,7 +708,6 @@ class WeatherExtension {
             return;
         }
         
-        
         container.innerHTML = '<canvas id="tempChart"></canvas>';
         
         const labels = next12Hours.map((h, i) => {
@@ -787,35 +716,76 @@ class WeatherExtension {
         });
         
         const temperatures = next12Hours.map(h => Math.round(h.temp_c));
-        
+        const precipChances = next12Hours.map(h => h.chance_of_rain ?? h.chance_of_snow ?? 0);
         
         const minTemp = Math.min(...temperatures);
         const maxTemp = Math.max(...temperatures);
         
         const ctx = document.getElementById('tempChart').getContext('2d');
         
-     
+        // Create gradient for temperature line
+        const gradientStroke = ctx.createLinearGradient(0, 0, 0, 200);
+        gradientStroke.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        gradientStroke.addColorStop(1, 'rgba(59, 130, 246, 0.9)');
+        
+        const gradientFill = ctx.createLinearGradient(0, 0, 0, 200);
+        gradientFill.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+        gradientFill.addColorStop(1, 'rgba(59, 130, 246, 0.1)');
+        
+        if (this.tempChart) {
+            this.tempChart.destroy();
+        }
+        
         this.tempChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: '°C',
-                    data: temperatures,
-                    borderColor: 'rgba(255, 255, 255, 0.9)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3,
-                    pointBackgroundColor: 'rgba(255, 255, 255, 1)',
-                    pointBorderColor: 'rgba(59, 130, 246, 1)',
-                    pointBorderWidth: 2,
-                    pointRadius: 3
-                }]
+                datasets: [
+                    {
+                        label: 'Temperature',
+                        data: temperatures,
+                        borderColor: gradientStroke,
+                        backgroundColor: gradientFill,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(255, 255, 255, 1)',
+                        pointBorderColor: 'rgba(59, 130, 246, 1)',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Precipitation',
+                        data: precipChances,
+                        backgroundColor: function(context) {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) {
+                                return null;
+                            }
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.05)');
+                            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.4)');
+                            return gradient;
+                        },
+                        borderColor: 'transparent',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        yAxisID: 'y1',
+                        order: 1
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
                 plugins: {
                     legend: {
                         display: false
@@ -826,9 +796,15 @@ class WeatherExtension {
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         titleColor: 'white',
                         bodyColor: 'white',
+                        padding: 12,
+                        displayColors: true,
                         callbacks: {
                             label: function(context) {
-                                return `Temp: ${context.parsed.y}°C`;
+                                if (context.datasetIndex === 0) {
+                                    return `Temp: ${context.parsed.y}°C`;
+                                } else {
+                                    return `Precip: ${context.parsed.y}%`;
+                                }
                             }
                         }
                     }
@@ -847,6 +823,9 @@ class WeatherExtension {
                         }
                     },
                     y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)',
                             drawBorder: false
@@ -862,10 +841,71 @@ class WeatherExtension {
                         },
                         min: minTemp - 2,
                         max: maxTemp + 2
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: false,
+                        position: 'right',
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            drawOnChartArea: false,
+                        }
                     }
                 }
-            }
+            },
+            plugins: [{
+                id: 'precipitationOverlay',
+                afterDatasetsDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    const chartArea = chart.chartArea;
+                    const meta = chart.getDatasetMeta(1);
+                    
+                    precipChances.forEach((chance, i) => {
+                        if (chance > 30) {
+                            const x = meta.data[i].x;
+                            const nextX = i < meta.data.length - 1 ? meta.data[i + 1].x : chartArea.right;
+                            const width = nextX - x;
+                            
+                            ctx.save();
+                            ctx.globalAlpha = 0.15;
+                            ctx.fillStyle = chance > 50 ? '#3b82f6' : '#60a5fa';
+                            ctx.fillRect(x - width / 2, chartArea.top, width, chartArea.bottom - chartArea.top);
+                            
+                            // Draw rain/snow droplets
+                            const dropletCount = Math.floor(chance / 20);
+                            for (let j = 0; j < dropletCount; j++) {
+                                const dropX = x - width / 2 + Math.random() * width;
+                                const dropY = chartArea.top + Math.random() * (chartArea.bottom - chartArea.top);
+                                
+                                ctx.beginPath();
+                                ctx.arc(dropX, dropY, 2, 0, Math.PI * 2);
+                                ctx.fillStyle = 'rgba(59, 130, 246, 0.6)';
+                                ctx.fill();
+                            }
+                            
+                            ctx.restore();
+                        }
+                    });
+                }
+            }]
         });
+    }
+
+    displayWeatherMap(location) {
+        const mapFrame = document.getElementById('mapFrame');
+        if (!mapFrame) return;
+        
+        // OpenWeatherMap with precipitation layer
+        const API_KEY = 'da9393ec436a49ef8b332007251611';
+        const lat = location.lat;
+        const lon = location.lon;
+        const zoom = 10;
+        
+        // Using OpenStreetMap with weather overlay
+        const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.5},${lat-0.5},${lon+0.5},${lat+0.5}&layer=mapnik&marker=${lat},${lon}`;
+        
+        mapFrame.src = mapUrl;
     }
 
     displayForecast(days) {
@@ -906,7 +946,7 @@ class WeatherExtension {
                         <div class="condition">${day.day.condition.text}</div>
                     </div>
                 </div>
-                <div class="forecast-day-details">
+                <div class="forecast-day-details collapsed">
                     <div class="forecast-detail-item">
                         <span class="forecast-detail-label"><span class="forecast-detail-icon">💧</span> Precip %</span>
                         <span class="forecast-detail-value">${day.day.daily_chance_of_rain || 0}%</span>

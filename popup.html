@@ -8,8 +8,23 @@
 </head>
 <body>
   <div class="container">
+    <!-- Loading Progress Bar -->
+    <div id="loadingProgress" class="loading-progress hidden">
+      <div class="progress-bar">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+      <div id="progressText" class="progress-text">Loading... 0%</div>
+    </div>
+
     <div class="header">
-      <h1>Weather 4cast</h1>
+      <div class="header-top">
+        <h1>Weather 4cast</h1>
+        <button id="refreshButton" class="refresh-button" title="Refresh weather data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+        </button>
+      </div>
       <div class="city-selector">
         <div class="search-input-wrapper">
           <input type="text" id="citySearch" placeholder="Search for a city..." autocomplete="off">
@@ -119,9 +134,16 @@
       </div>
 
       <div class="temperature-graph-section">
-        <h3 class="section-title">12-Hour Temperature</h3>
+        <h3 class="section-title">12-Hour Temperature & Precipitation</h3>
         <div id="temperatureGraph" class="temperature-graph">
           <canvas id="tempChart"></canvas>
+        </div>
+      </div>
+
+      <div class="weather-map-section">
+        <h3 class="section-title">Weather Map</h3>
+        <div id="weatherMap" class="weather-map">
+          <iframe id="mapFrame" class="map-frame" frameborder="0"></iframe>
         </div>
       </div>
 
