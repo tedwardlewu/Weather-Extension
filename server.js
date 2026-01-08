@@ -15,10 +15,12 @@ const CACHE_TTL = 5 * 60 * 1000;
 async function fetchWeather(city, days = 3) {
   const url = `${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(city)}&days=${days}&aqi=no&alerts=no`;
   const res = await fetch(url);
+
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
     throw new Error(errData.error?.message || `HTTP ${res.status}`);
   }
+
   return res.json();
 }
 
@@ -28,17 +30,18 @@ app.get('/weather', async (req, res) => {
 
   const city = q.trim().toLowerCase();
 
-  // Check cache first
   const cached = weatherCache.get(city);
   const now = Date.now();
   if (cached && now - cached.timestamp < CACHE_TTL) {
     return res.json(cached.data);
   }
 
-  // Immediately respond with last cached data if available, otherwise empty placeholder
+  
   if (cached) {
-    res.json(cached.data); // send stale data immediately
-  } else {
+    res.json(cached.data); 
+  } 
+  
+  else {
     res.json({
       location: { name: city, country: '', localtime: '' },
       current: { temp_c: 0, condition: { text: '', icon: '' }, feelslike_c: 0, humidity: 0, wind_kph: 0, pressure_mb: 0, vis_km: 0, uv: 0, precip_mm: 0 },
@@ -46,7 +49,6 @@ app.get('/weather', async (req, res) => {
     });
   }
 
-  // Fetch fresh data asynchronously and update cache
   fetchWeather(city, days).then(data => {
     weatherCache.set(city, { data, timestamp: Date.now() });
   }).catch(err => {
@@ -63,6 +65,7 @@ app.get('/search', async (req, res) => {
     const data = await response.json();
     res.json(data);
   } 
+  
   catch (err) {
     res.status(500).json({ error: err.message });
   }

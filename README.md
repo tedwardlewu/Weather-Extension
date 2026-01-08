@@ -1,14 +1,26 @@
+Weather Extension — Chrome Browser Extension
+
 Description:
-This weather Extension is a Chrome browser extension that provides real-time weather information and forecasts. 
-It helps users quickly check current conditions and plan their day, integrating with external APIs for accurate data and providing a responsive, user-friendly interface.
+The Weather Extension is a Chrome browser extension that provides real-time weather information and forecasts. Users can quickly check current conditions, plan their day, and access accurate data through integration with external weather APIs. The extension features a responsive, user-friendly interface for seamless browsing.
 
 Key Features:
-- Real-Time Weather Data: Displays current temperature, conditions, and weather alerts.
 
-- Smart Search & Auto-Complete: Suggests valid locations as users type, improving usability.
+Real-Time Weather Data: Displays current temperature, conditions, and weather alerts.
 
-- Forecast Functionality: Provides short-term and weekly forecasts for selected locations.
+Smart Search & Auto-Complete: Suggests valid locations as users type, improving usability and reducing input errors.
 
-*Integration with external weather API
+Forecast Functionality: Provides short-term and weekly forecasts for selected locations.
 
-*Ran on Render
+API Integration: Connects to external weather APIs for accurate and up-to-date information.
+
+Deployment: Backend hosted on Render, ensuring stable, publicly accessible service.
+
+Technologies Used:
+
+JavaScript, React, HTML, CSS, C++
+
+*External weather API: WeatherAPI.com
+
+*Render for backend hosting
+
+*UptimeRobot for health ping
