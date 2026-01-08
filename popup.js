@@ -6,6 +6,8 @@ class WeatherExtension {
         this.API_BASE = 'https://weather-extension-1.onrender.com';
         this.tempChart = null;
         this.loadingProgress = 0;
+        this.map = null;
+        this.mapMarker = null;
         this.init();
     }
 
@@ -257,10 +259,8 @@ class WeatherExtension {
         btn.textContent = pinned ? '❌' : '📌';
         btn.classList.toggle('pinned', pinned);
         
-        // Remove all time-based classes first
         btn.classList.remove('pin-morning', 'pin-day', 'pin-afternoon', 'pin-evening', 'pin-night');
         
-        // Add the current time-based class if pinned
         if (pinned) {
             const hour = new Date().getHours();
             const timeClass = this.getTimePeriodClass(hour);
@@ -723,7 +723,6 @@ class WeatherExtension {
         
         const ctx = document.getElementById('tempChart').getContext('2d');
         
-        // Create gradient for temperature line
         const gradientStroke = ctx.createLinearGradient(0, 0, 0, 200);
         gradientStroke.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
         gradientStroke.addColorStop(1, 'rgba(59, 130, 246, 0.9)');
@@ -872,7 +871,6 @@ class WeatherExtension {
                             ctx.fillStyle = chance > 50 ? '#3b82f6' : '#60a5fa';
                             ctx.fillRect(x - width / 2, chartArea.top, width, chartArea.bottom - chartArea.top);
                             
-                            // Draw rain/snow droplets
                             const dropletCount = Math.floor(chance / 20);
                             for (let j = 0; j < dropletCount; j++) {
                                 const dropX = x - width / 2 + Math.random() * width;
@@ -893,19 +891,56 @@ class WeatherExtension {
     }
 
     displayWeatherMap(location) {
-        const mapFrame = document.getElementById('mapFrame');
-        if (!mapFrame) return;
+        const mapContainer = document.getElementById('weatherMap');
+        if (!mapContainer) return;
         
-        // OpenWeatherMap with precipitation layer
-        const API_KEY = 'da9393ec436a49ef8b332007251611';
         const lat = location.lat;
         const lon = location.lon;
-        const zoom = 10;
         
-        // Using OpenStreetMap with weather overlay
-        const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.5},${lat-0.5},${lon+0.5},${lat+0.5}&layer=mapnik&marker=${lat},${lon}`;
+        if (typeof L === 'undefined') {
+            console.error('Leaflet library not loaded');
+            mapContainer.innerHTML = '<div style="color: white; text-align: center; padding: 100px 20px;">Map library not loaded</div>';
+            return;
+        }
         
-        mapFrame.src = mapUrl;
+        if (this.map) {
+            this.map.remove();
+            this.map = null;
+            this.mapMarker = null;
+        }
+        
+        mapContainer.innerHTML = '';
+        
+        setTimeout(() => {
+            try {
+                this.map = L.map(mapContainer).setView([lat, lon], 10);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(this.map);
+                
+                delete L.Icon.Default.prototype._getIconUrl;
+                L.Icon.Default.mergeOptions({
+                    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+                    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
+                });
+                
+                this.mapMarker = L.marker([lat, lon]).addTo(this.map);
+                this.mapMarker.bindPopup(`<b>${location.name}</b><br>${location.country}`).openPopup();
+                
+                setTimeout(() => {
+                    if (this.map) {
+                        this.map.invalidateSize();
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                mapContainer.innerHTML = '<div style="color: white; text-align: center; padding: 100px 20px;">Error loading map</div>';
+            }
+        }, 0);
     }
 
     displayForecast(days) {

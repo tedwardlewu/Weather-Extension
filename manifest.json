@@ -24,5 +24,8 @@
   ],
   "host_permissions": [
     "https://api.weatherapi.com/*"
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; object-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com;"
+  }
 }
