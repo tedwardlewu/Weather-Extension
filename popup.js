@@ -319,6 +319,7 @@ class WeatherExtension {
                     this.currentCity = pin.name;
                     const searchEl = document.getElementById('citySearch');
                     if (searchEl) searchEl.value = pin.name;
+                    this.updatePinButton(); // Update button immediately
                     this.showPlaceholderData();
                     this.fetchWeatherData();
                     this.hideSearchResults();
@@ -482,6 +483,7 @@ class WeatherExtension {
                     this.currentCity = city.name;
                     const searchEl = document.getElementById('citySearch');
                     if (searchEl) searchEl.value = this.currentCity;
+                    this.updatePinButton(); // Update button immediately
                     this.hideSearchResults();
                     this.showPlaceholderData();
                     this.fetchWeatherData();
@@ -698,6 +700,12 @@ class WeatherExtension {
         const container = document.getElementById('temperatureGraph');
         if (!container) return;
         
+        // Check if Chart.js is available
+        if (typeof Chart === 'undefined') {
+            container.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Temperature graph unavailable<br><small style="font-size: 11px; opacity: 0.7;">Chart library not loaded</small></div>';
+            return;
+        }
+        
         const currentTimeMs = new Date(localTime.replace(/-/g, '/')).getTime();
         const next12Hours = hourlyData
             .filter(h => new Date(h.time.replace(/-/g, '/')).getTime() >= currentTimeMs)
@@ -892,55 +900,59 @@ class WeatherExtension {
 
     displayWeatherMap(location) {
         const mapContainer = document.getElementById('weatherMap');
-        if (!mapContainer) return;
-        
-        const lat = location.lat;
-        const lon = location.lon;
-        
-        if (typeof L === 'undefined') {
-            console.error('Leaflet library not loaded');
-            mapContainer.innerHTML = '<div style="color: white; text-align: center; padding: 100px 20px;">Map library not loaded</div>';
+        if (!mapContainer) {
+            console.error('Weather map container not found');
             return;
         }
         
-        if (this.map) {
-            this.map.remove();
-            this.map = null;
-            this.mapMarker = null;
-        }
+        const lat = location.lat;
+        const lon = location.lon;
+        const cityName = location.name;
+        const country = location.country;
         
+        // Clear container
         mapContainer.innerHTML = '';
         
-        setTimeout(() => {
-            try {
-                this.map = L.map(mapContainer).setView([lat, lon], 10);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
-                }).addTo(this.map);
-                
-                delete L.Icon.Default.prototype._getIconUrl;
-                L.Icon.Default.mergeOptions({
-                    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-                    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
-                });
-                
-                this.mapMarker = L.marker([lat, lon]).addTo(this.map);
-                this.mapMarker.bindPopup(`<b>${location.name}</b><br>${location.country}`).openPopup();
-                
+        try {
+            // Create iframe for the map
+            const iframe = document.createElement('iframe');
+            const mapUrl = chrome.runtime.getURL('map.html');
+            console.log('Loading map from:', mapUrl);
+            iframe.src = mapUrl;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.borderRadius = '12px';
+            
+            // Wait for iframe to load, then send location data
+            iframe.onload = () => {
+                console.log('Map iframe loaded successfully');
                 setTimeout(() => {
-                    if (this.map) {
-                        this.map.invalidateSize();
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'UPDATE_MAP',
+                            lat: lat,
+                            lon: lon,
+                            cityName: cityName,
+                            country: country
+                        }, '*');
+                        console.log('Sent location data to map:', cityName, lat, lon);
+                    } catch (error) {
+                        console.error('Error sending message to map iframe:', error);
                     }
-                }, 100);
-                
-            } catch (error) {
-                console.error('Error initializing map:', error);
-                mapContainer.innerHTML = '<div style="color: white; text-align: center; padding: 100px 20px;">Error loading map</div>';
-            }
-        }, 0);
+                }, 250); // Short delay
+            };
+            
+            iframe.onerror = (error) => {
+                console.error('Error loading map iframe:', error);
+                mapContainer.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Map failed to load</div>';
+            };
+            
+            mapContainer.appendChild(iframe);
+        } catch (error) {
+            console.error('Error creating map:', error);
+            mapContainer.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Map unavailable</div>';
+        }
     }
 
     displayForecast(days) {
