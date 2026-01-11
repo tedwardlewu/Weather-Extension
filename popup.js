@@ -910,11 +910,9 @@ class WeatherExtension {
         const cityName = location.name;
         const country = location.country;
         
-        // Clear container
         mapContainer.innerHTML = '';
         
         try {
-            // Create iframe for the map
             const iframe = document.createElement('iframe');
             const mapUrl = chrome.runtime.getURL('map.html');
             console.log('Loading map from:', mapUrl);
@@ -924,7 +922,6 @@ class WeatherExtension {
             iframe.style.border = 'none';
             iframe.style.borderRadius = '12px';
             
-            // Wait for iframe to load, then send location data
             iframe.onload = () => {
                 console.log('Map iframe loaded successfully');
                 setTimeout(() => {
@@ -940,7 +937,7 @@ class WeatherExtension {
                     } catch (error) {
                         console.error('Error sending message to map iframe:', error);
                     }
-                }, 250); // Short delay
+                }, 250); 
             };
             
             iframe.onerror = (error) => {
