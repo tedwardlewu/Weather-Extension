@@ -578,7 +578,7 @@ class WeatherExtension {
         this.displayPrecipitation(data.current, hourlyData, data.location.localtime);
         this.displayForecast(data.forecast.forecastday);
         this.displayHourlyForecast(hourlyData, data.location.localtime);
-        this.displayTemperatureGraph(hourlyData, data.location.localtime);
+        this.displayTemperatureGraph(hourlyData, data.location.localtime, data.location);
         this.displayWeatherMap(data.location);
         
         const hour = this.getHourFromLocalTime(data.location.localtime);
@@ -696,7 +696,7 @@ class WeatherExtension {
             });
     }
 
-    displayTemperatureGraph(hourlyData, localTime) {
+    displayTemperatureGraph(hourlyData, localTime, location) {
         const container = document.getElementById('temperatureGraph');
         if (!container) return;
         
@@ -707,27 +707,29 @@ class WeatherExtension {
         }
         
         const currentTimeMs = new Date(localTime.replace(/-/g, '/')).getTime();
-        const next12Hours = hourlyData
+        const next18Hours = hourlyData
             .filter(h => new Date(h.time.replace(/-/g, '/')).getTime() >= currentTimeMs)
-            .slice(0, 12);
+            .slice(0, 18);
         
-        if (next12Hours.length === 0) {
+        if (next18Hours.length === 0) {
             container.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 0;">No temperature data available</div>';
             return;
         }
         
         container.innerHTML = '<canvas id="tempChart"></canvas>';
         
-        const labels = next12Hours.map((h, i) => {
+        const labels = next18Hours.map((h, i) => {
             const hourNum = parseInt(h.time.split(' ')[1].split(':')[0]);
             return i === 0 ? 'Now' : `${hourNum % 12 === 0 ? 12 : hourNum % 12}${hourNum >= 12 ? 'PM' : 'AM'}`;
         });
         
-        const temperatures = next12Hours.map(h => Math.round(h.temp_c));
-        const precipChances = next12Hours.map(h => h.chance_of_rain ?? h.chance_of_snow ?? 0);
+        const temperatures = next18Hours.map(h => Math.round(h.temp_c));
+        const feelsLike = next18Hours.map(h => Math.round(h.feelslike_c));
+        const precipChances = next18Hours.map(h => h.chance_of_rain ?? h.chance_of_snow ?? 0);
+        const weatherIcons = next18Hours.map(h => `https:${h.condition.icon}`);
         
-        const minTemp = Math.min(...temperatures);
-        const maxTemp = Math.max(...temperatures);
+        const minTemp = Math.min(...temperatures, ...feelsLike);
+        const maxTemp = Math.max(...temperatures, ...feelsLike);
         
         const ctx = document.getElementById('tempChart').getContext('2d');
         
@@ -759,8 +761,23 @@ class WeatherExtension {
                         pointBackgroundColor: 'rgba(255, 255, 255, 1)',
                         pointBorderColor: 'rgba(59, 130, 246, 1)',
                         pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Feels Like',
+                        data: feelsLike,
+                        borderColor: 'rgba(255, 255, 255, 0.5)',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 3],
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: 'rgba(255, 255, 255, 0.7)',
+                        pointBorderColor: 'rgba(255, 255, 255, 0.7)',
                         yAxisID: 'y'
                     },
                     {
@@ -789,13 +806,48 @@ class WeatherExtension {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 5,  // Minimal padding to maximize chart size
+                        bottom: 5,
+                        left: 5,
+                        right: 5
+                    }
+                },
                 interaction: {
                     mode: 'index',
                     intersect: false,
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            font: {
+                                size: 11
+                            },
+                            padding: 10,
+                            usePointStyle: true,
+                            pointStyle: 'line',
+                            filter: function(legendItem) {
+                                // Hide precipitation from legend
+                                return legendItem.text !== 'Precipitation';
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: `${location.name}, ${location.country}`,
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        padding: {
+                            top: 8,
+                            bottom: 8
+                        }
                     },
                     tooltip: {
                         mode: 'index',
@@ -809,6 +861,8 @@ class WeatherExtension {
                             label: function(context) {
                                 if (context.datasetIndex === 0) {
                                     return `Temp: ${context.parsed.y}°C`;
+                                } else if (context.datasetIndex === 1) {
+                                    return `Feels Like: ${context.parsed.y}°C`;
                                 } else {
                                     return `Precip: ${context.parsed.y}%`;
                                 }
@@ -819,13 +873,20 @@ class WeatherExtension {
                 scales: {
                     x: {
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)',
-                            drawBorder: false
+                            color: 'rgba(255, 255, 255, 0.2)',
+                            lineWidth: 1,
+                            drawBorder: true
+                        },
+                        border: {
+                            display: true,
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            width: 2
                         },
                         ticks: {
-                            color: 'rgba(255, 255, 255, 0.8)',
+                            color: 'rgba(255, 255, 255, 0.95)',
                             font: {
-                                size: 10
+                                size: 11,
+                                weight: '600'
                             }
                         }
                     },
@@ -834,14 +895,22 @@ class WeatherExtension {
                         display: true,
                         position: 'left',
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)',
-                            drawBorder: false
+                            color: 'rgba(255, 255, 255, 0.2)',
+                            lineWidth: 1,
+                            drawBorder: true
+                        },
+                        border: {
+                            display: true,
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            width: 2
                         },
                         ticks: {
-                            color: 'rgba(255, 255, 255, 0.8)',
+                            color: 'rgba(255, 255, 255, 0.95)',
                             font: {
-                                size: 10
+                                size: 11,
+                                weight: '600'
                             },
+                            stepSize: 2,
                             callback: function(value) {
                                 return value + '°';
                             }
@@ -866,7 +935,7 @@ class WeatherExtension {
                 afterDatasetsDraw: (chart) => {
                     const ctx = chart.ctx;
                     const chartArea = chart.chartArea;
-                    const meta = chart.getDatasetMeta(1);
+                    const meta = chart.getDatasetMeta(2);
                     
                     precipChances.forEach((chance, i) => {
                         if (chance > 30) {
@@ -890,6 +959,37 @@ class WeatherExtension {
                                 ctx.fill();
                             }
                             
+                            ctx.restore();
+                        }
+                    });
+                }
+            }, {
+                id: 'weatherIcons',
+                afterDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    const chartArea = chart.chartArea;
+                    const meta = chart.getDatasetMeta(0);
+                    
+                    // Preload icons
+                    const iconImages = weatherIcons.map(url => {
+                        const img = new Image();
+                        img.src = url;
+                        return img;
+                    });
+                    
+                    meta.data.forEach((point, i) => {
+                        // Only show icon for every other hour to reduce clutter
+                        if (i % 2 !== 0) return;
+                        
+                        const img = iconImages[i];
+                        if (img.complete) {
+                            const iconSize = 18; // Small size
+                            const x = point.x - iconSize / 2;
+                            const y = chartArea.top + 5; // Position inside chart area, just below title
+                            
+                            ctx.save();
+                            ctx.globalAlpha = 0.85;
+                            ctx.drawImage(img, x, y, iconSize, iconSize);
                             ctx.restore();
                         }
                     });
@@ -937,7 +1037,7 @@ class WeatherExtension {
                     } catch (error) {
                         console.error('Error sending message to map iframe:', error);
                     }
-                }, 250); 
+                }, 400); // Reduced since map.js now waits for proper dimensions
             };
             
             iframe.onerror = (error) => {
