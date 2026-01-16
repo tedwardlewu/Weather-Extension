@@ -437,7 +437,9 @@ class WeatherExtension {
                 return 0;
             });
             this.displaySearchResults(enhancedResults);
-        } catch (error) {
+        } 
+        
+        catch (error) {
             console.error('Search failed:', error);
         }
     }
@@ -452,7 +454,9 @@ class WeatherExtension {
             noResult.textContent = 'No cities found';
             noResult.style.cursor = 'default';
             resultsContainer.appendChild(noResult);
-        } else {
+        } 
+        
+        else {
             cities.forEach(city => {
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
@@ -462,14 +466,18 @@ class WeatherExtension {
                 }
 
                 let displayText = city.name;
+                
                 if (city.region && city.country) {
                     displayText += `, ${city.region}, ${city.country}`;
-                } else if (city.country) {
+                } 
+                
+                else if (city.country) {
                     displayText += `, ${city.country}`;
                 }
                 const textSpan = document.createElement('span');
                 textSpan.textContent = displayText;
                 item.appendChild(textSpan);
+                
                 if (city.isPinned) {
                     const pinIndicator = document.createElement('span');
                     pinIndicator.textContent = ' 📌';
@@ -496,6 +504,7 @@ class WeatherExtension {
 
     hideSearchResults() {
         const resultsContainer = document.getElementById('searchResults');
+
         if (resultsContainer) {
             resultsContainer.classList.add('hidden');
             const active = resultsContainer.querySelector('.active');
@@ -615,7 +624,9 @@ class WeatherExtension {
         
         if (hasWarning) {
             warningElement.classList.remove('hidden');
-        } else {
+        } 
+        
+        else {
             warningElement.classList.add('hidden');
         }
     }
@@ -808,7 +819,7 @@ class WeatherExtension {
                 maintainAspectRatio: false,
                 layout: {
                     padding: {
-                        top: 5,  // Minimal padding to maximize chart size
+                        top: 5,  
                         bottom: 5,
                         left: 5,
                         right: 5
@@ -831,7 +842,7 @@ class WeatherExtension {
                             usePointStyle: true,
                             pointStyle: 'line',
                             filter: function(legendItem) {
-                                // Hide precipitation from legend
+                                
                                 return legendItem.text !== 'Precipitation';
                             }
                         }
@@ -861,9 +872,13 @@ class WeatherExtension {
                             label: function(context) {
                                 if (context.datasetIndex === 0) {
                                     return `Temp: ${context.parsed.y}°C`;
-                                } else if (context.datasetIndex === 1) {
+                                } 
+                                
+                                else if (context.datasetIndex === 1) {
                                     return `Feels Like: ${context.parsed.y}°C`;
-                                } else {
+                                } 
+                                
+                                else {
                                     return `Precip: ${context.parsed.y}%`;
                                 }
                             }
@@ -970,7 +985,7 @@ class WeatherExtension {
                     const chartArea = chart.chartArea;
                     const meta = chart.getDatasetMeta(0);
                     
-                    // Preload icons
+                    
                     const iconImages = weatherIcons.map(url => {
                         const img = new Image();
                         img.src = url;
@@ -978,14 +993,14 @@ class WeatherExtension {
                     });
                     
                     meta.data.forEach((point, i) => {
-                        // Only show icon for every other hour to reduce clutter
+                        
                         if (i % 2 !== 0) return;
                         
                         const img = iconImages[i];
                         if (img.complete) {
-                            const iconSize = 18; // Small size
+                            const iconSize = 18; 
                             const x = point.x - iconSize / 2;
-                            const y = chartArea.top + 5; // Position inside chart area, just below title
+                            const y = chartArea.top + 5; 
                             
                             ctx.save();
                             ctx.globalAlpha = 0.85;
@@ -1037,7 +1052,7 @@ class WeatherExtension {
                     } catch (error) {
                         console.error('Error sending message to map iframe:', error);
                     }
-                }, 400); // Reduced since map.js now waits for proper dimensions
+                }, 400); 
             };
             
             iframe.onerror = (error) => {

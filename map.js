@@ -2,7 +2,6 @@ console.log('[MAP] Script loaded');
 let map = null;
 let marker = null;
 
-// Wait for container to have dimensions before initializing
 function waitForContainer(callback) {
   const container = document.getElementById('map');
   if (!container) {
@@ -10,7 +9,6 @@ function waitForContainer(callback) {
     return;
   }
   
-  // Check if container has dimensions
   const checkDimensions = () => {
     const width = container.offsetWidth;
     const height = container.offsetHeight;
@@ -28,11 +26,9 @@ function waitForContainer(callback) {
   checkDimensions();
 }
 
-// Initialize map with default location
 function initMap(lat, lon, cityName, country) {
   console.log('[MAP] initMap called with:', lat, lon, cityName, country);
   
-  // If map exists, just update position
   if (map && marker) {
     console.log('[MAP] Updating existing map');
     map.setView([lat, lon], map.getZoom(), { animate: true });
@@ -46,18 +42,17 @@ function initMap(lat, lon, cityName, country) {
     return;
   }
 
-  // Check if Leaflet is available
   if (typeof L === 'undefined') {
     console.error('[MAP] Leaflet library not loaded!');
     document.getElementById('map').innerHTML = '<div style="color: white; text-align: center; padding: 60px 20px;">Map library not loaded</div>';
     return;
   }
 
-  // Wait for container to be ready
+
   waitForContainer(() => {
     console.log('[MAP] Creating map...');
     
-    // Create new map
+
     map = L.map('map', {
       center: [lat, lon],
       zoom: 12,
@@ -68,7 +63,6 @@ function initMap(lat, lon, cityName, country) {
 
     console.log('[MAP] Adding tile layer...');
     
-    // Add tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap',
       maxZoom: 19,
@@ -77,7 +71,6 @@ function initMap(lat, lon, cityName, country) {
 
     console.log('[MAP] Adding marker...');
     
-    // Add marker
     marker = L.marker([lat, lon]).addTo(map);
     marker.bindPopup(`
       <div style="text-align: center;">
@@ -86,7 +79,7 @@ function initMap(lat, lon, cityName, country) {
       </div>
     `).openPopup();
 
-    // Critical: Force Leaflet to recalculate everything
+  
     setTimeout(() => {
       if (map) {
         console.log('[MAP] Forcing size recalculation');
@@ -106,7 +99,7 @@ function initMap(lat, lon, cityName, country) {
   });
 }
 
-// Listen for messages from parent window
+
 window.addEventListener('message', (event) => {
   console.log('[MAP] Received message:', event.data);
   if (event.data && event.data.type === 'UPDATE_MAP') {
@@ -115,5 +108,4 @@ window.addEventListener('message', (event) => {
   }
 });
 
-// Wait for page to load
 console.log('[MAP] Waiting for location data from parent...');
