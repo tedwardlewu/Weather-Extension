@@ -146,7 +146,9 @@ class WeatherExtension {
     }
 
     async fetchCity(city) {
-        const res = await fetch(`${this.API_BASE}/weather?q=${encodeURIComponent(city)}&days=7`);
+        // Add timestamp to prevent caching
+        const timestamp = Date.now();
+        const res = await fetch(`${this.API_BASE}/weather?q=${encodeURIComponent(city)}&days=7&_t=${timestamp}`);
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.error?.message || `HTTP ${res.status}`);
@@ -332,7 +334,9 @@ class WeatherExtension {
     getHourFromLocalTime(localTime) {
         try {
             return parseInt(localTime.split(' ')[1].split(':')[0]);
-        } catch {
+        } 
+        
+        catch {
             return 12;
         }
     }
@@ -341,6 +345,7 @@ class WeatherExtension {
         const citySearch = document.getElementById('citySearch');
         if (!citySearch) return;
         citySearch.addEventListener('input', e => {
+
             const query = e.target.value.trim();
             if (this.searchTimeout) clearTimeout(this.searchTimeout);
             if (query.length > 0) {
@@ -349,15 +354,19 @@ class WeatherExtension {
                     this.smartSearchCities(query)
                         .finally(() => document.querySelector('.search-loading')?.classList.add('hidden'));
                 }, 300);
-            } else {
+            } 
+            
+            else {
                 this.hideSearchResults();
             }
         });
         citySearch.addEventListener('focus', () => {
+
             if (citySearch.value.trim().length > 0) {
                 this.smartSearchCities(citySearch.value.trim());
             }
         });
+
         citySearch.addEventListener('keydown', e => this.handleSearchKeyDown(e));
         document.addEventListener('click', e => {
             if (!e.target.closest('.city-selector') && !e.target.closest('.search-results')) {
@@ -382,16 +391,22 @@ class WeatherExtension {
             }
             active?.classList.remove('active');
             next?.classList.add('active');
-        } else if (e.key === 'ArrowUp') {
+        } 
+        
+        else if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (!active) {
                 next = items[items.length - 1];
-            } else {
+            } 
+            
+            else {
                 next = active.previousElementSibling || items[items.length - 1];
             }
             active?.classList.remove('active');
             next?.classList.add('active');
-        } else if (e.key === 'Enter') {
+        }
+        
+        else if (e.key === 'Enter') {
             e.preventDefault();
             if (active) {
                 this.currentCity = active.dataset.cityName;
@@ -400,7 +415,9 @@ class WeatherExtension {
                 this.showPlaceholderData();
                 this.fetchWeatherData();
                 document.getElementById('citySearch')?.blur();
-            } else {
+            } 
+            
+            else {
                 this.currentCity = document.getElementById('citySearch')?.value.trim();
                 if (this.currentCity) {
                     this.hideSearchResults();
@@ -418,6 +435,7 @@ class WeatherExtension {
             const response = await fetch(
                 `https://api.weatherapi.com/v1/search.json?key=${API_KEY}&q=${encodeURIComponent(query)}`
             );
+
             if (!response.ok) {
                 throw new Error(`WeatherAPI HTTP ${response.status}: ${response.statusText}`);
             }
@@ -431,13 +449,16 @@ class WeatherExtension {
                 ...city,
                 isPinned: pinnedCityNames.includes(city.name.toLowerCase())
             }));
+
             enhancedResults.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return 0;
             });
             this.displaySearchResults(enhancedResults);
-        } catch (error) {
+        } 
+        
+        catch (error) {
             console.error('Search failed:', error);
         }
     }
@@ -452,7 +473,9 @@ class WeatherExtension {
             noResult.textContent = 'No cities found';
             noResult.style.cursor = 'default';
             resultsContainer.appendChild(noResult);
-        } else {
+        } 
+        
+        else {
             cities.forEach(city => {
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
@@ -464,12 +487,15 @@ class WeatherExtension {
                 let displayText = city.name;
                 if (city.region && city.country) {
                     displayText += `, ${city.region}, ${city.country}`;
-                } else if (city.country) {
+                } 
+                
+                else if (city.country) {
                     displayText += `, ${city.country}`;
                 }
                 const textSpan = document.createElement('span');
                 textSpan.textContent = displayText;
                 item.appendChild(textSpan);
+
                 if (city.isPinned) {
                     const pinIndicator = document.createElement('span');
                     pinIndicator.textContent = ' 📌';
@@ -478,12 +504,13 @@ class WeatherExtension {
                     pinIndicator.style.fontSize = '12px';
                     item.appendChild(pinIndicator);
                 }
+
                 item.dataset.cityName = city.name;
                 item.addEventListener('click', () => {
                     this.currentCity = city.name;
                     const searchEl = document.getElementById('citySearch');
                     if (searchEl) searchEl.value = this.currentCity;
-                    this.updatePinButton(); // Update button immediately
+                    this.updatePinButton(); 
                     this.hideSearchResults();
                     this.showPlaceholderData();
                     this.fetchWeatherData();
@@ -698,9 +725,10 @@ class WeatherExtension {
 
     displayTemperatureGraph(hourlyData, localTime, location) {
         const container = document.getElementById('temperatureGraph');
+
         if (!container) return;
         
-        // Check if Chart.js is available
+        
         if (typeof Chart === 'undefined') {
             container.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Temperature graph unavailable<br><small style="font-size: 11px; opacity: 0.7;">Chart library not loaded</small></div>';
             return;
@@ -786,9 +814,11 @@ class WeatherExtension {
                         backgroundColor: function(context) {
                             const chart = context.chart;
                             const {ctx, chartArea} = chart;
+
                             if (!chartArea) {
                                 return null;
                             }
+
                             const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
                             gradient.addColorStop(0, 'rgba(59, 130, 246, 0.05)');
                             gradient.addColorStop(1, 'rgba(59, 130, 246, 0.4)');
@@ -808,18 +838,22 @@ class WeatherExtension {
                 maintainAspectRatio: false,
                 layout: {
                     padding: {
-                        top: 5,  // Minimal padding to maximize chart size
+                        top: 5,  
                         bottom: 5,
                         left: 5,
                         right: 5
                     }
                 },
+
                 interaction: {
                     mode: 'index',
                     intersect: false,
                 },
+
                 plugins: {
+
                     legend: {
+
                         display: true,
                         position: 'bottom',
                         labels: {
@@ -831,7 +865,7 @@ class WeatherExtension {
                             usePointStyle: true,
                             pointStyle: 'line',
                             filter: function(legendItem) {
-                                // Hide precipitation from legend
+                                
                                 return legendItem.text !== 'Precipitation';
                             }
                         }
@@ -859,11 +893,16 @@ class WeatherExtension {
                         displayColors: true,
                         callbacks: {
                             label: function(context) {
+
                                 if (context.datasetIndex === 0) {
                                     return `Temp: ${context.parsed.y}°C`;
-                                } else if (context.datasetIndex === 1) {
+                                } 
+                                
+                                else if (context.datasetIndex === 1) {
                                     return `Feels Like: ${context.parsed.y}°C`;
-                                } else {
+                                } 
+                                
+                                else {
                                     return `Precip: ${context.parsed.y}%`;
                                 }
                             }
@@ -978,14 +1017,14 @@ class WeatherExtension {
                     });
                     
                     meta.data.forEach((point, i) => {
-                        // Only show icon for every other hour to reduce clutter
+                        
                         if (i % 2 !== 0) return;
                         
                         const img = iconImages[i];
                         if (img.complete) {
-                            const iconSize = 18; // Small size
+                            const iconSize = 18; 
                             const x = point.x - iconSize / 2;
-                            const y = chartArea.top + 5; // Position inside chart area, just below title
+                            const y = chartArea.top + 5; 
                             
                             ctx.save();
                             ctx.globalAlpha = 0.85;
@@ -1037,7 +1076,7 @@ class WeatherExtension {
                     } catch (error) {
                         console.error('Error sending message to map iframe:', error);
                     }
-                }, 400); // Reduced since map.js now waits for proper dimensions
+                }, 400); 
             };
             
             iframe.onerror = (error) => {
@@ -1057,7 +1096,7 @@ class WeatherExtension {
         if (!container || !days) return;
         container.innerHTML = '';
         
-        console.log('Total forecast days received:', days.length); // Debug log
+        console.log('Total forecast days received:', days.length); 
         
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -1073,47 +1112,71 @@ class WeatherExtension {
             }
         }
         
-        const displayDays = days.slice(startIndex, startIndex + 7);
-        console.log('Displaying days:', displayDays.length); // Debug log
+        const displayDays = days.slice(startIndex);
+        
+        console.log('Displaying days:', displayDays.length); 
         
         displayDays.forEach((day, index) => {
             const forecastDate = new Date(day.date + 'T00:00:00');
-            const dayName = index === 0 ? 'Today' : forecastDate.toLocaleDateString('en-US', { weekday: 'short' });
+            const dayName = index === 0 ? 'Today' : forecastDate.toLocaleDateString('en-US', { weekday: 'long' });
             const monthDay = forecastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             
             const div = document.createElement('div');
             div.className = 'forecast-day';
+            
             div.innerHTML = `
                 <div class="forecast-header">
-                    <div class="forecast-date">
+                    <div class="forecast-date-section">
                         <div class="forecast-day-name">${dayName}</div>
                         <div class="forecast-month-day">${monthDay}</div>
                     </div>
-                    <img class="forecast-icon" src="https:${day.day.condition.icon}" alt="${day.day.condition.text}">
-                    <div class="forecast-temp-main">${Math.round(day.day.maxtemp_c)}°</div>
+                    <div class="forecast-main-info">
+                        <img class="forecast-icon" src="https:${day.day.condition.icon}" alt="${day.day.condition.text}">
+                        <div class="forecast-temp-container">
+                            <div class="forecast-temp-main">${Math.round(day.day.maxtemp_c)}°</div>
+                            <div class="forecast-condition-text">${day.day.condition.text}</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="forecast-body">
-                    <div class="forecast-condition">${day.day.condition.text}</div>
                     <div class="forecast-temp-range">
-                        <span class="temp-high">↑ ${Math.round(day.day.maxtemp_c)}°</span>
-                        <span class="temp-low">↓ ${Math.round(day.day.mintemp_c)}°</span>
+                        <div class="temp-range-item">
+                            <span class="temp-label">High</span>
+                            <span class="temp-high">${Math.round(day.day.maxtemp_c)}°C</span>
+                        </div>
+                        <div class="temp-range-item">
+                            <span class="temp-label">Low</span>
+                            <span class="temp-low">${Math.round(day.day.mintemp_c)}°C</span>
+                        </div>
                     </div>
-                    <div class="forecast-details">
-                        <div class="detail-item">
-                            <span class="detail-icon">🌧️</span>
-                            <span class="detail-value">${day.day.daily_chance_of_rain || 0}%</span>
+                    <div class="forecast-details-grid">
+                        <div class="forecast-detail-item">
+                            <div class="detail-label">Rain</div>
+                            <div class="detail-content">
+                                <span class="detail-icon">💧</span>
+                                <span class="detail-value">${Math.round(day.day.daily_chance_of_rain || 0)}%</span>
+                            </div>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-icon">💨</span>
-                            <span class="detail-value">${Math.round(day.day.maxwind_kph)}km/h</span>
+                        <div class="forecast-detail-item">
+                            <div class="detail-label">Humidity</div>
+                            <div class="detail-content">
+                                <span class="detail-icon">💦</span>
+                                <span class="detail-value">${day.day.avghumidity}%</span>
+                            </div>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-icon">💧</span>
-                            <span class="detail-value">${day.day.avghumidity}%</span>
+                        <div class="forecast-detail-item">
+                            <div class="detail-label">Wind</div>
+                            <div class="detail-content">
+                                <span class="detail-icon">🌬️</span>
+                                <span class="detail-value">${Math.round(day.day.maxwind_kph)} km/h</span>
+                            </div>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-icon">☀️</span>
-                            <span class="detail-value">UV ${day.day.uv || 0}</span>
+                        <div class="forecast-detail-item">
+                            <div class="detail-label">UV Index</div>
+                            <div class="detail-content">
+                                <span class="detail-icon">☀️</span>
+                                <span class="detail-value">${day.day.uv || 0}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
