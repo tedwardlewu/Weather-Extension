@@ -15,11 +15,119 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
     #map {
       width: 100%;
       height: 100%;
+    }
+
+    .map-search-container {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      width: 280px;
+    }
+
+    .map-search-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-radius: 8px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .map-search-input:focus {
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .map-search-input::placeholder {
+      color: #64748b;
+    }
+
+    .map-search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 8px;
+      margin-top: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      display: none;
+    }
+
+    .map-search-results.active {
+      display: block;
+    }
+
+    .map-search-result-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #1e293b;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      transition: background 0.2s ease;
+    }
+
+    .map-search-result-item:hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: #1d4ed8;
+    }
+
+    .map-search-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .custom-zoom-controls {
+      position: absolute;
+      top: 70px;
+      right: 10px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .zoom-btn {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #333;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .zoom-btn:hover {
+      background: white;
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .zoom-btn:active {
+      transform: scale(0.95);
     }
 
     .leaflet-popup-content-wrapper {
@@ -40,20 +148,42 @@
     }
 
     .leaflet-control-zoom {
-      border: 1px solid rgba(255, 255, 255, 0.3) !important;
+      display: none !important;
     }
 
-    .leaflet-control-zoom a {
-      background: rgba(255, 255, 255, 0.9) !important;
-      color: #333 !important;
+    .map-search-results::-webkit-scrollbar {
+      width: 5px;
     }
 
-    .leaflet-control-zoom a:hover {
-      background: white !important;
+    .map-search-results::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .map-search-results::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
     }
   </style>
 </head>
 <body>
+  <!-- Search Bar -->
+  <div class="map-search-container">
+    <input 
+      type="text" 
+      id="mapSearch" 
+      class="map-search-input" 
+      placeholder="Search location..."
+      autocomplete="off"
+    />
+    <div id="mapSearchResults" class="map-search-results"></div>
+  </div>
+
+  <!-- Custom Zoom Controls -->
+  <div class="custom-zoom-controls">
+    <button id="zoomIn" class="zoom-btn" title="Zoom In">+</button>
+    <button id="zoomOut" class="zoom-btn" title="Zoom Out">−</button>
+  </div>
+
   <div id="map"></div>
   <script src="leaflet.min.js"></script>
   <script src="map.js"></script>

@@ -860,7 +860,7 @@ body {
   overflow: hidden;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  height: 250px;
+  height: 400px;
   width: 100%;
   position: relative;
 }
