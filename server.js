@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 const weatherCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; 
 
-async function fetchWeather(city, days = 3) {
+async function fetchWeather(city, days = 7) {
   const url = `${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(city)}&days=${days}&aqi=no&alerts=no`;
   const res = await fetch(url);
 
@@ -29,6 +29,7 @@ app.get('/weather', async (req, res) => {
   if (!q) return res.status(400).json({ error: 'Query missing' });
 
   const city = q.trim().toLowerCase();
+  const numDays = parseInt(days) || 7;
 
   const cached = weatherCache.get(city);
   const now = Date.now();
@@ -36,12 +37,9 @@ app.get('/weather', async (req, res) => {
     return res.json(cached.data);
   }
 
-  
   if (cached) {
     res.json(cached.data); 
-  } 
-  
-  else {
+  } else {
     res.json({
       location: { name: city, country: '', localtime: '' },
       current: { temp_c: 0, condition: { text: '', icon: '' }, feelslike_c: 0, humidity: 0, wind_kph: 0, pressure_mb: 0, vis_km: 0, uv: 0, precip_mm: 0 },
@@ -49,7 +47,7 @@ app.get('/weather', async (req, res) => {
     });
   }
 
-  fetchWeather(city, days).then(data => {
+  fetchWeather(city, numDays).then(data => {
     weatherCache.set(city, { data, timestamp: Date.now() });
   }).catch(err => {
     console.error('Weather fetch failed:', err);
@@ -64,9 +62,7 @@ app.get('/search', async (req, res) => {
     const response = await fetch(`${BASE_URL}/search.json?key=${API_KEY}&q=${encodeURIComponent(q)}`);
     const data = await response.json();
     res.json(data);
-  } 
-  
-  catch (err) {
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

@@ -146,7 +146,7 @@ class WeatherExtension {
     }
 
     async fetchCity(city) {
-        const res = await fetch(`${this.API_BASE}/weather?q=${encodeURIComponent(city)}&days=3`);
+        const res = await fetch(`${this.API_BASE}/weather?q=${encodeURIComponent(city)}&days=7`);
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.error?.message || `HTTP ${res.status}`);
@@ -437,9 +437,7 @@ class WeatherExtension {
                 return 0;
             });
             this.displaySearchResults(enhancedResults);
-        } 
-        
-        catch (error) {
+        } catch (error) {
             console.error('Search failed:', error);
         }
     }
@@ -454,9 +452,7 @@ class WeatherExtension {
             noResult.textContent = 'No cities found';
             noResult.style.cursor = 'default';
             resultsContainer.appendChild(noResult);
-        } 
-        
-        else {
+        } else {
             cities.forEach(city => {
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
@@ -466,18 +462,14 @@ class WeatherExtension {
                 }
 
                 let displayText = city.name;
-                
                 if (city.region && city.country) {
                     displayText += `, ${city.region}, ${city.country}`;
-                } 
-                
-                else if (city.country) {
+                } else if (city.country) {
                     displayText += `, ${city.country}`;
                 }
                 const textSpan = document.createElement('span');
                 textSpan.textContent = displayText;
                 item.appendChild(textSpan);
-                
                 if (city.isPinned) {
                     const pinIndicator = document.createElement('span');
                     pinIndicator.textContent = ' 📌';
@@ -504,7 +496,6 @@ class WeatherExtension {
 
     hideSearchResults() {
         const resultsContainer = document.getElementById('searchResults');
-
         if (resultsContainer) {
             resultsContainer.classList.add('hidden');
             const active = resultsContainer.querySelector('.active');
@@ -624,9 +615,7 @@ class WeatherExtension {
         
         if (hasWarning) {
             warningElement.classList.remove('hidden');
-        } 
-        
-        else {
+        } else {
             warningElement.classList.add('hidden');
         }
     }
@@ -819,7 +808,7 @@ class WeatherExtension {
                 maintainAspectRatio: false,
                 layout: {
                     padding: {
-                        top: 5,  
+                        top: 5,  // Minimal padding to maximize chart size
                         bottom: 5,
                         left: 5,
                         right: 5
@@ -842,7 +831,7 @@ class WeatherExtension {
                             usePointStyle: true,
                             pointStyle: 'line',
                             filter: function(legendItem) {
-                                
+                                // Hide precipitation from legend
                                 return legendItem.text !== 'Precipitation';
                             }
                         }
@@ -872,13 +861,9 @@ class WeatherExtension {
                             label: function(context) {
                                 if (context.datasetIndex === 0) {
                                     return `Temp: ${context.parsed.y}°C`;
-                                } 
-                                
-                                else if (context.datasetIndex === 1) {
+                                } else if (context.datasetIndex === 1) {
                                     return `Feels Like: ${context.parsed.y}°C`;
-                                } 
-                                
-                                else {
+                                } else {
                                     return `Precip: ${context.parsed.y}%`;
                                 }
                             }
@@ -985,7 +970,7 @@ class WeatherExtension {
                     const chartArea = chart.chartArea;
                     const meta = chart.getDatasetMeta(0);
                     
-                    
+                    // Preload icons
                     const iconImages = weatherIcons.map(url => {
                         const img = new Image();
                         img.src = url;
@@ -993,14 +978,14 @@ class WeatherExtension {
                     });
                     
                     meta.data.forEach((point, i) => {
-                        
+                        // Only show icon for every other hour to reduce clutter
                         if (i % 2 !== 0) return;
                         
                         const img = iconImages[i];
                         if (img.complete) {
-                            const iconSize = 18; 
+                            const iconSize = 18; // Small size
                             const x = point.x - iconSize / 2;
-                            const y = chartArea.top + 5; 
+                            const y = chartArea.top + 5; // Position inside chart area, just below title
                             
                             ctx.save();
                             ctx.globalAlpha = 0.85;
@@ -1052,7 +1037,7 @@ class WeatherExtension {
                     } catch (error) {
                         console.error('Error sending message to map iframe:', error);
                     }
-                }, 400); 
+                }, 400); // Reduced since map.js now waits for proper dimensions
             };
             
             iframe.onerror = (error) => {
@@ -1072,6 +1057,8 @@ class WeatherExtension {
         if (!container || !days) return;
         container.innerHTML = '';
         
+        console.log('Total forecast days received:', days.length); // Debug log
+        
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
@@ -1086,70 +1073,51 @@ class WeatherExtension {
             }
         }
         
-        const displayDays = days.slice(startIndex, startIndex + 3);
+        const displayDays = days.slice(startIndex, startIndex + 7);
+        console.log('Displaying days:', displayDays.length); // Debug log
         
         displayDays.forEach((day, index) => {
             const forecastDate = new Date(day.date + 'T00:00:00');
-            const dayName = index === 0 ? 'Today' : forecastDate.toLocaleDateString('en-US', { weekday: 'long' });
+            const dayName = index === 0 ? 'Today' : forecastDate.toLocaleDateString('en-US', { weekday: 'short' });
+            const monthDay = forecastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             
             const div = document.createElement('div');
             div.className = 'forecast-day';
             div.innerHTML = `
-                <div class="forecast-day-header">
-                    <div class="forecast-day-left">
-                        <div class="day">${dayName}</div>
-                        <img src="https:${day.day.condition.icon}" alt="${day.day.condition.text}">
+                <div class="forecast-header">
+                    <div class="forecast-date">
+                        <div class="forecast-day-name">${dayName}</div>
+                        <div class="forecast-month-day">${monthDay}</div>
                     </div>
-                    <div class="forecast-day-right">
-                        <div class="forecast-temp">${Math.round(day.day.maxtemp_c)}° / ${Math.round(day.day.mintemp_c)}°</div>
-                        <div class="condition">${day.day.condition.text}</div>
-                    </div>
+                    <img class="forecast-icon" src="https:${day.day.condition.icon}" alt="${day.day.condition.text}">
+                    <div class="forecast-temp-main">${Math.round(day.day.maxtemp_c)}°</div>
                 </div>
-                <div class="forecast-day-details collapsed">
-                    <div class="forecast-detail-item">
-                        <span class="forecast-detail-label"><span class="forecast-detail-icon">💧</span> Precip %</span>
-                        <span class="forecast-detail-value">${day.day.daily_chance_of_rain || 0}%</span>
+                <div class="forecast-body">
+                    <div class="forecast-condition">${day.day.condition.text}</div>
+                    <div class="forecast-temp-range">
+                        <span class="temp-high">↑ ${Math.round(day.day.maxtemp_c)}°</span>
+                        <span class="temp-low">↓ ${Math.round(day.day.mintemp_c)}°</span>
                     </div>
-                    <div class="forecast-detail-item">
-                        <span class="forecast-detail-label"><span class="forecast-detail-icon">💨</span> Wind</span>
-                        <span class="forecast-detail-value">${Math.round(day.day.maxwind_kph)} km/h</span>
+                    <div class="forecast-details">
+                        <div class="detail-item">
+                            <span class="detail-icon">🌧️</span>
+                            <span class="detail-value">${day.day.daily_chance_of_rain || 0}%</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon">💨</span>
+                            <span class="detail-value">${Math.round(day.day.maxwind_kph)}km/h</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon">💧</span>
+                            <span class="detail-value">${day.day.avghumidity}%</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon">☀️</span>
+                            <span class="detail-value">UV ${day.day.uv || 0}</span>
+                        </div>
                     </div>
-                    <div class="forecast-detail-item">
-                        <span class="forecast-detail-label"><span class="forecast-detail-icon">💦</span> Precip</span>
-                        <span class="forecast-detail-value">${Math.round(day.day.totalprecip_mm * 10) / 10} mm</span>
-                    </div>
-                    <div class="forecast-detail-item">
-                        <span class="forecast-detail-label"><span class="forecast-detail-icon">💧</span> Humidity</span>
-                        <span class="forecast-detail-value">${day.day.avghumidity}%</span>
-                    </div>
-                    <div class="forecast-detail-item">
-                        <span class="forecast-detail-label"><span class="forecast-detail-icon">☀️</span> UV</span>
-                        <span class="forecast-detail-value">${day.day.uv || 0}</span>
-                    </div>
-                    <div class="forecast-detail-item">
-                        <span class="forecast-detail-label"><span class="forecast-detail-icon">👁️</span> Visibility</span>
-                        <span class="forecast-detail-value">${day.day.avgvis_km} km</span>
-                    </div>
-                    ${day.astro ? `
-                    <div class="forecast-detail-item">
-                        <span class="forecast-detail-label"><span class="forecast-detail-icon">🌅</span> Sunrise</span>
-                        <span class="forecast-detail-value">${day.astro.sunrise}</span>
-                    </div>
-                    <div class="forecast-detail-item">
-                        <span class="forecast-detail-label"><span class="forecast-detail-icon">🌇</span> Sunset</span>
-                        <span class="forecast-detail-value">${day.astro.sunset}</span>
-                    </div>
-                    ` : ''}
                 </div>
             `;
-            
-            const header = div.querySelector('.forecast-day-header');
-            const details = div.querySelector('.forecast-day-details');
-            
-            header.addEventListener('click', () => {
-                div.classList.toggle('expanded');
-                details.classList.toggle('collapsed');
-            });
             
             container.appendChild(div);
         });
