@@ -39,7 +39,9 @@ app.get('/weather', async (req, res) => {
 
   if (cached) {
     res.json(cached.data); 
-  } else {
+  } 
+  
+  else {
     res.json({
       location: { name: city, country: '', localtime: '' },
       current: { temp_c: 0, condition: { text: '', icon: '' }, feelslike_c: 0, humidity: 0, wind_kph: 0, pressure_mb: 0, vis_km: 0, uv: 0, precip_mm: 0 },
