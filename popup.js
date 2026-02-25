@@ -8,6 +8,7 @@ class WeatherExtension {
         this.loadingProgress = 0;
         this.map = null;
         this.mapMarker = null;
+        this.mapIframe = null; // Track the map iframe to reuse it
         this.init();
     }
 
@@ -345,7 +346,6 @@ class WeatherExtension {
         const citySearch = document.getElementById('citySearch');
         if (!citySearch) return;
         citySearch.addEventListener('input', e => {
-
             const query = e.target.value.trim();
             if (this.searchTimeout) clearTimeout(this.searchTimeout);
             if (query.length > 0) {
@@ -354,14 +354,12 @@ class WeatherExtension {
                     this.smartSearchCities(query)
                         .finally(() => document.querySelector('.search-loading')?.classList.add('hidden'));
                 }, 300);
-            } 
-            
-            else {
+            } else {
                 this.hideSearchResults();
             }
         });
-        citySearch.addEventListener('focus', () => {
 
+        citySearch.addEventListener('focus', () => {
             if (citySearch.value.trim().length > 0) {
                 this.smartSearchCities(citySearch.value.trim());
             }
@@ -393,7 +391,9 @@ class WeatherExtension {
             next?.classList.add('active');
         } 
         
-        else if (e.key === 'ArrowUp') {
+        else if (e.key === 'ArrowUp')
+            
+            {
             e.preventDefault();
             if (!active) {
                 next = items[items.length - 1];
@@ -404,10 +404,11 @@ class WeatherExtension {
             }
             active?.classList.remove('active');
             next?.classList.add('active');
-        }
+        } 
         
         else if (e.key === 'Enter') {
             e.preventDefault();
+
             if (active) {
                 this.currentCity = active.dataset.cityName;
                 document.getElementById('citySearch').value = this.currentCity;
@@ -435,7 +436,6 @@ class WeatherExtension {
             const response = await fetch(
                 `https://api.weatherapi.com/v1/search.json?key=${API_KEY}&q=${encodeURIComponent(query)}`
             );
-
             if (!response.ok) {
                 throw new Error(`WeatherAPI HTTP ${response.status}: ${response.statusText}`);
             }
@@ -449,16 +449,13 @@ class WeatherExtension {
                 ...city,
                 isPinned: pinnedCityNames.includes(city.name.toLowerCase())
             }));
-
             enhancedResults.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return 0;
             });
             this.displaySearchResults(enhancedResults);
-        } 
-        
-        catch (error) {
+        } catch (error) {
             console.error('Search failed:', error);
         }
     }
@@ -473,9 +470,7 @@ class WeatherExtension {
             noResult.textContent = 'No cities found';
             noResult.style.cursor = 'default';
             resultsContainer.appendChild(noResult);
-        } 
-        
-        else {
+        } else {
             cities.forEach(city => {
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
@@ -487,15 +482,12 @@ class WeatherExtension {
                 let displayText = city.name;
                 if (city.region && city.country) {
                     displayText += `, ${city.region}, ${city.country}`;
-                } 
-                
-                else if (city.country) {
+                } else if (city.country) {
                     displayText += `, ${city.country}`;
                 }
                 const textSpan = document.createElement('span');
                 textSpan.textContent = displayText;
                 item.appendChild(textSpan);
-
                 if (city.isPinned) {
                     const pinIndicator = document.createElement('span');
                     pinIndicator.textContent = ' 📌';
@@ -504,13 +496,12 @@ class WeatherExtension {
                     pinIndicator.style.fontSize = '12px';
                     item.appendChild(pinIndicator);
                 }
-
                 item.dataset.cityName = city.name;
                 item.addEventListener('click', () => {
                     this.currentCity = city.name;
                     const searchEl = document.getElementById('citySearch');
                     if (searchEl) searchEl.value = this.currentCity;
-                    this.updatePinButton(); 
+                    this.updatePinButton();
                     this.hideSearchResults();
                     this.showPlaceholderData();
                     this.fetchWeatherData();
@@ -725,9 +716,7 @@ class WeatherExtension {
 
     displayTemperatureGraph(hourlyData, localTime, location) {
         const container = document.getElementById('temperatureGraph');
-
         if (!container) return;
-        
         
         if (typeof Chart === 'undefined') {
             container.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Temperature graph unavailable<br><small style="font-size: 11px; opacity: 0.7;">Chart library not loaded</small></div>';
@@ -814,11 +803,9 @@ class WeatherExtension {
                         backgroundColor: function(context) {
                             const chart = context.chart;
                             const {ctx, chartArea} = chart;
-
                             if (!chartArea) {
                                 return null;
                             }
-
                             const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
                             gradient.addColorStop(0, 'rgba(59, 130, 246, 0.05)');
                             gradient.addColorStop(1, 'rgba(59, 130, 246, 0.4)');
@@ -838,22 +825,18 @@ class WeatherExtension {
                 maintainAspectRatio: false,
                 layout: {
                     padding: {
-                        top: 5,  
+                        top: 5, 
                         bottom: 5,
                         left: 5,
                         right: 5
                     }
                 },
-
                 interaction: {
                     mode: 'index',
                     intersect: false,
                 },
-
                 plugins: {
-
                     legend: {
-
                         display: true,
                         position: 'bottom',
                         labels: {
@@ -865,7 +848,7 @@ class WeatherExtension {
                             usePointStyle: true,
                             pointStyle: 'line',
                             filter: function(legendItem) {
-                                
+                            
                                 return legendItem.text !== 'Precipitation';
                             }
                         }
@@ -893,16 +876,11 @@ class WeatherExtension {
                         displayColors: true,
                         callbacks: {
                             label: function(context) {
-
                                 if (context.datasetIndex === 0) {
                                     return `Temp: ${context.parsed.y}°C`;
-                                } 
-                                
-                                else if (context.datasetIndex === 1) {
+                                } else if (context.datasetIndex === 1) {
                                     return `Feels Like: ${context.parsed.y}°C`;
-                                } 
-                                
-                                else {
+                                } else {
                                     return `Precip: ${context.parsed.y}%`;
                                 }
                             }
@@ -1002,14 +980,15 @@ class WeatherExtension {
                         }
                     });
                 }
-            }, {
+            }, 
+            
+            {
                 id: 'weatherIcons',
                 afterDraw: (chart) => {
                     const ctx = chart.ctx;
                     const chartArea = chart.chartArea;
                     const meta = chart.getDatasetMeta(0);
                     
-                    // Preload icons
                     const iconImages = weatherIcons.map(url => {
                         const img = new Image();
                         img.src = url;
@@ -1017,7 +996,7 @@ class WeatherExtension {
                     });
                     
                     meta.data.forEach((point, i) => {
-                        
+                      
                         if (i % 2 !== 0) return;
                         
                         const img = iconImages[i];
@@ -1049,6 +1028,24 @@ class WeatherExtension {
         const cityName = location.name;
         const country = location.country;
         
+        if (this.mapIframe && this.mapIframe.contentWindow) {
+            console.log('Reusing existing map iframe, updating location...');
+            try {
+                this.mapIframe.contentWindow.postMessage({
+                    type: 'UPDATE_MAP',
+                    lat: lat,
+                    lon: lon,
+                    cityName: cityName,
+                    country: country
+                }, '*');
+                console.log('Sent location update to existing map:', cityName, lat, lon);
+            } catch (error) {
+                console.error('Error updating map location:', error);
+            }
+            return; 
+        }
+        
+        console.log('Creating new map iframe...');
         mapContainer.innerHTML = '';
         
         try {
@@ -1085,6 +1082,7 @@ class WeatherExtension {
             };
             
             mapContainer.appendChild(iframe);
+            this.mapIframe = iframe; 
         } catch (error) {
             console.error('Error creating map:', error);
             mapContainer.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Map unavailable</div>';
@@ -1114,7 +1112,7 @@ class WeatherExtension {
         
         const displayDays = days.slice(startIndex);
         
-        console.log('Displaying days:', displayDays.length); 
+        console.log('Displaying days:', displayDays.length); // Debug log
         
         displayDays.forEach((day, index) => {
             const forecastDate = new Date(day.date + 'T00:00:00');
