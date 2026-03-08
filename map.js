@@ -2,7 +2,7 @@ console.log('[MAP] Script loaded');
 let map = null;
 let marker = null;
 let searchTimeout = null;
-const API_KEY = 'da9393ec436a49ef8b332007251611'; //pls no steal :(
+const API_KEY = 'da9393ec436a49ef8b332007251611';
 
 function waitForContainer(callback) {
   const container = document.getElementById('map');
@@ -28,7 +28,6 @@ function waitForContainer(callback) {
   
   checkDimensions();
 }
-
 
 async function searchCities(query) {
   if (!query || query.length < 2) return [];
@@ -61,7 +60,6 @@ async function searchCities(query) {
     return [];
   }
 }
-
 
 function displaySearchResults(results) {
   const container = document.getElementById('mapSearchResults');
@@ -98,10 +96,8 @@ function displaySearchResults(results) {
   container.classList.add('active');
 }
 
-
 function initMap(lat, lon, cityName, country) {
   console.log('[MAP] initMap called with:', lat, lon, cityName, country);
-  
   
   if (map && marker) {
     console.log('[MAP] Updating existing map position');
@@ -122,7 +118,6 @@ function initMap(lat, lon, cityName, country) {
     return;
   }
 
-
   waitForContainer(() => {
     console.log('[MAP] Creating map...');
     
@@ -141,19 +136,18 @@ function initMap(lat, lon, cityName, country) {
 
     console.log('[MAP] Adding tile layer...');
     
-
+    // Add tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap',
       maxZoom: 19,
       subdomains: ['a', 'b', 'c'],
-      updateWhenIdle: false,
+      updateWhenIdle: false, 
       updateWhenZooming: false, 
       keepBuffer: 2 
     }).addTo(map);
 
     console.log('[MAP] Adding marker...');
-    
- 
+
     marker = L.marker([lat, lon]).addTo(map);
     marker.bindPopup(`
       <div style="text-align: center;">
@@ -161,7 +155,6 @@ function initMap(lat, lon, cityName, country) {
         ${country}
       </div>
     `).openPopup();
-
 
     const zoomInBtn = document.getElementById('zoomIn');
     const zoomOutBtn = document.getElementById('zoomOut');
@@ -177,7 +170,6 @@ function initMap(lat, lon, cityName, country) {
         map.zoomOut();
       });
     }
-
 
     const searchInput = document.getElementById('mapSearch');
     const searchResults = document.getElementById('mapSearchResults');
@@ -220,6 +212,19 @@ function initMap(lat, lon, cityName, country) {
         map.invalidateSize({ pan: false });
       }
     }, 300);
+    
+    setTimeout(() => {
+      if (map) {
+        console.log('[MAP] Third size recalculation');
+        map.invalidateSize({ pan: false });
+      }
+    }, 600);
+    
+    window.addEventListener('resize', () => {
+      if (map) {
+        map.invalidateSize();
+      }
+    });
     
     console.log('[MAP] Map initialized successfully');
   });

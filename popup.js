@@ -8,7 +8,7 @@ class WeatherExtension {
         this.loadingProgress = 0;
         this.map = null;
         this.mapMarker = null;
-        this.mapIframe = null; // Track the map iframe to reuse it
+        this.mapIframe = null;
         this.init();
     }
 
@@ -335,9 +335,7 @@ class WeatherExtension {
     getHourFromLocalTime(localTime) {
         try {
             return parseInt(localTime.split(' ')[1].split(':')[0]);
-        } 
-        
-        catch {
+        } catch {
             return 12;
         }
     }
@@ -358,13 +356,11 @@ class WeatherExtension {
                 this.hideSearchResults();
             }
         });
-
         citySearch.addEventListener('focus', () => {
             if (citySearch.value.trim().length > 0) {
                 this.smartSearchCities(citySearch.value.trim());
             }
         });
-
         citySearch.addEventListener('keydown', e => this.handleSearchKeyDown(e));
         document.addEventListener('click', e => {
             if (!e.target.closest('.city-selector') && !e.target.closest('.search-results')) {
@@ -389,26 +385,17 @@ class WeatherExtension {
             }
             active?.classList.remove('active');
             next?.classList.add('active');
-        } 
-        
-        else if (e.key === 'ArrowUp')
-            
-            {
+        } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (!active) {
                 next = items[items.length - 1];
-            } 
-            
-            else {
+            } else {
                 next = active.previousElementSibling || items[items.length - 1];
             }
             active?.classList.remove('active');
             next?.classList.add('active');
-        } 
-        
-        else if (e.key === 'Enter') {
+        } else if (e.key === 'Enter') {
             e.preventDefault();
-
             if (active) {
                 this.currentCity = active.dataset.cityName;
                 document.getElementById('citySearch').value = this.currentCity;
@@ -416,9 +403,7 @@ class WeatherExtension {
                 this.showPlaceholderData();
                 this.fetchWeatherData();
                 document.getElementById('citySearch')?.blur();
-            } 
-            
-            else {
+            } else {
                 this.currentCity = document.getElementById('citySearch')?.value.trim();
                 if (this.currentCity) {
                     this.hideSearchResults();
@@ -501,7 +486,7 @@ class WeatherExtension {
                     this.currentCity = city.name;
                     const searchEl = document.getElementById('citySearch');
                     if (searchEl) searchEl.value = this.currentCity;
-                    this.updatePinButton();
+                    this.updatePinButton(); // Update button immediately
                     this.hideSearchResults();
                     this.showPlaceholderData();
                     this.fetchWeatherData();
@@ -718,6 +703,7 @@ class WeatherExtension {
         const container = document.getElementById('temperatureGraph');
         if (!container) return;
         
+        // Check if Chart.js is available
         if (typeof Chart === 'undefined') {
             container.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Temperature graph unavailable<br><small style="font-size: 11px; opacity: 0.7;">Chart library not loaded</small></div>';
             return;
@@ -825,7 +811,7 @@ class WeatherExtension {
                 maintainAspectRatio: false,
                 layout: {
                     padding: {
-                        top: 5, 
+                        top: 5,  // Minimal padding to maximize chart size
                         bottom: 5,
                         left: 5,
                         right: 5
@@ -848,7 +834,7 @@ class WeatherExtension {
                             usePointStyle: true,
                             pointStyle: 'line',
                             filter: function(legendItem) {
-                            
+                                // Hide precipitation from legend
                                 return legendItem.text !== 'Precipitation';
                             }
                         }
@@ -980,15 +966,14 @@ class WeatherExtension {
                         }
                     });
                 }
-            }, 
-            
-            {
+            }, {
                 id: 'weatherIcons',
                 afterDraw: (chart) => {
                     const ctx = chart.ctx;
                     const chartArea = chart.chartArea;
                     const meta = chart.getDatasetMeta(0);
                     
+                    // Preload icons
                     const iconImages = weatherIcons.map(url => {
                         const img = new Image();
                         img.src = url;
@@ -996,14 +981,14 @@ class WeatherExtension {
                     });
                     
                     meta.data.forEach((point, i) => {
-                      
+                        // Only show icon for every other hour to reduce clutter
                         if (i % 2 !== 0) return;
                         
                         const img = iconImages[i];
                         if (img.complete) {
-                            const iconSize = 18; 
+                            const iconSize = 18; // Small size
                             const x = point.x - iconSize / 2;
-                            const y = chartArea.top + 5; 
+                            const y = chartArea.top + 5; // Position inside chart area, just below title
                             
                             ctx.save();
                             ctx.globalAlpha = 0.85;
@@ -1028,7 +1013,12 @@ class WeatherExtension {
         const cityName = location.name;
         const country = location.country;
         
-        if (this.mapIframe && this.mapIframe.contentWindow) {
+        // Check if iframe exists, is in the DOM, and has a valid contentWindow
+        const iframeValid = this.mapIframe && 
+                           this.mapIframe.parentNode === mapContainer && 
+                           this.mapIframe.contentWindow;
+        
+        if (iframeValid) {
             console.log('Reusing existing map iframe, updating location...');
             try {
                 this.mapIframe.contentWindow.postMessage({
@@ -1039,12 +1029,15 @@ class WeatherExtension {
                     country: country
                 }, '*');
                 console.log('Sent location update to existing map:', cityName, lat, lon);
+                return; // Successfully reused iframe
             } catch (error) {
                 console.error('Error updating map location:', error);
+                // If postMessage fails, fall through to recreate
+                this.mapIframe = null;
             }
-            return; 
         }
         
+        // Create new iframe (either first time or after error)
         console.log('Creating new map iframe...');
         mapContainer.innerHTML = '';
         
@@ -1073,19 +1066,22 @@ class WeatherExtension {
                     } catch (error) {
                         console.error('Error sending message to map iframe:', error);
                     }
-                }, 400); 
+                }, 500); // Increased delay to let map fully initialize
             };
             
             iframe.onerror = (error) => {
                 console.error('Error loading map iframe:', error);
                 mapContainer.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Map failed to load</div>';
+                this.mapIframe = null;
             };
             
             mapContainer.appendChild(iframe);
-            this.mapIframe = iframe; 
+            this.mapIframe = iframe; // Store reference for reuse
+            console.log('Map iframe created and stored');
         } catch (error) {
             console.error('Error creating map:', error);
             mapContainer.innerHTML = '<div style="color: rgba(255,255,255,0.7); text-align: center; padding: 60px 20px;">Map unavailable</div>';
+            this.mapIframe = null;
         }
     }
 
@@ -1094,7 +1090,7 @@ class WeatherExtension {
         if (!container || !days) return;
         container.innerHTML = '';
         
-        console.log('Total forecast days received:', days.length); 
+        console.log('Total forecast days received:', days.length); // Debug log
         
         const today = new Date();
         today.setHours(0, 0, 0, 0);
